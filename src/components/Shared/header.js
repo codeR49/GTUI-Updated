@@ -23,8 +23,7 @@ import GLOBAL_CONSTANTS from "../../Constants/GlobalConstants";
 import LogginButton from "./LogginButton";
 import UserLogginNav from "./UserLogginNav";
 import "./header.css";
-import haversine from 'haversine-distance';
-import axios from "axios";
+import { BasicModal } from "react-bootstrap-dynamic-modal";
 
 const NOTIFICATION_TIMER = 1000 * 60;
 const Header = () => {
@@ -55,10 +54,26 @@ const Header = () => {
 	const [userLoggedInNav, setUserLoggedInNav] = useState(NO_LOGGEDIN_USER);
 	let notifActionFlag = useRef(false);
 	let user = localStorage.getItem('currentUser');
-	const [orderDetails, setOrderDetails] = useState([]);
-	const [latitude, setLatitude] = useState('');
-	const [longitude, setLongitude] = useState('');
-	var distanceInMeters;
+	const [modalFlag, setModalFlag] = useState(false);
+	const [dealerStatus, setDealerStatus] = useState('');
+	const [basicModalProps, setBasicModalProps] = useState({
+		title: "Alert",
+		body: "",
+		size: 'xs',
+		modalClass: 'modal-width',
+		bodyClass: 'modal-body-bg',
+		headerClass: 'modal-header-bg',
+		isAnimate: false,
+		buttons: [
+			{
+				variant: "primary",
+				handler: () => setModalFlag(false),
+				label: "Close"
+			}
+		],
+		onHide: () => setModalFlag(false)
+	})
+
 	const initCarts = () => {
 		$(".shopping-cart").fadeToggle("fast");
 	};
@@ -440,75 +455,28 @@ const Header = () => {
 		}
 	}
 
-	const getAllOrders = () => {
-		//First point in your haversine calculation
-		//Second point in your haversine calculation
-		//let a, b;
-		let point1 = {}, point2 = {};
-		const userSid = userDetails.user.sid;
+	// get dealer status
+	const listMyStores = () => {
+		ApiService.getMyStores(userDetails.user.sid).then(
+			response => {
+				setDealerStatus(response.data[0].approvalStatus);
+			},
+			err => {
+				Toast.error({ message: err.response.data ? err.response.data.error : 'Data loading error', time: 2000 });
+			}
+		).finally(() => {
+			spinner.hide();
+		});
+	}
 
-		navigator.geolocation.getCurrentPosition(successCallback, errorCallback);
-		// if (navigator.geolocation) {
-		// 	navigator.geolocation.getCurrentPosition((position) => {
+	// init component
+	useEffect(() => {
+		if (userDetails?.user?.sid && userDetails.user.appUserType === "DEALER") {
+			listMyStores();
+		}
 
-		// 		setLatitude(position.coords.latitude);
-		// 		setLongitude(position.coords.longitude);
+	}, [listMyStores]);
 
-		// 	});
-		// }
-		point1["lat"] = latitude;
-		point1["lng"] = longitude;
-		// let userLatitude = latitude;
-		// let userLongitude = longitude;
-		// console.log("lat" + userLatitude);
-		// console.log("lng" + userLongitude);
-		// let diffLatitude, diffLongitude;
-
-		ApiService.getAllOrders(userSid).then(
-			(response) => {
-				setOrderDetails(response.data);
-				console.log(response.data[0]);
-				// for (let i = 0; i < response.data.length; i++) {
-				if (response.data[0].sid === "F2649BD283674D5B99FBA86550EF808C11D5635E142245C6A33D8B9D5F1D6EA2") {
-					point2["lat"] = response.data[0].latitude;
-					point2["lng"] = response.data[0].longitude;
-					//break;
-				}
-				//}
-				console.log(point1, point2);
-				distanceInMeters = haversine(point1, point2);
-				console.log(distanceInMeters);
-				if(distanceInMeters > 100){
-					Toast.success({
-                	message: `You are ${distanceInMeters -100} meters`,
-                	time: 6000,
-                });
-				}
-				// clearCart();
-				// dispatch({ type: "LOGOUT" });
-				// history.push("/");
-				// goToTopOfWindow();
-				// spinner.hide();
-				// Toast.success({
-				// 	message: "You have been successfully logged out",
-				// 	time: 2000,
-				// });
-			})
-	};
-
-	// useEffect(() => {
-	// 	getAllOrders();
-	// }, []);
-	const successCallback = (position) => {
-		setLatitude(position.coords.latitude);
-		setLongitude(position.coords.longitude);
-		console.log(position);
-	};
-
-	const errorCallback = (error) => {
-		console.log(error);
-	};
-	//console.log(distanceInMeters);
 	return (
 		<>
 			<div id="" class="top-section head-margin-top">
@@ -526,9 +494,20 @@ const Header = () => {
 								<li class="nav-item" onClick={() => initBuySell('/buyfilter')}>
 									<a class="nav-link cp nav-text-color">Buy</a>
 								</li>
-								<li class="nav-item" onClick={() => initBuySell('/create-listing')}>
-									<a class="nav-link cp nav-text-color">Sell</a>
-								</li>
+								{	
+									(userDetails.user && userDetails.user.appUserType === "DEALER" && dealerStatus === 'EXPIRED')
+									 ?
+									 <li class="nav-link cp nav-text-color" onClick={() => {setModalFlag(true); setBasicModalProps({...basicModalProps, body: "Your license is expired" }); }}>Sell</li>
+									 :
+									 (userDetails.user && userDetails.user.appUserType === "DEALER" && dealerStatus === 'UNDER_REVIEW') ?
+									 <li class="nav-link cp nav-text-color" onClick={() => {setModalFlag(true); setBasicModalProps({...basicModalProps, body: "Your license is under review" }); }}>Sell</li>
+									 :
+									<li class="nav-item" onClick={() => initBuySell('/create-listing')}>
+										<a class="nav-link cp nav-text-color">Sell</a>
+									</li> 
+									
+								}
+
 								<li class="nav-item" onClick={() => initBuySell('/getservice')}>
 									<a class="nav-link cp nav-text-color">Get Service</a>
 								</li>
@@ -1241,14 +1220,7 @@ const Header = () => {
 					{...{ locationModel, setLocationModel, updateUserLocation }}
 				/>
 			)}
-			{/* <button onClick={getAllOrders}>Distance</button>
-			<button onClick={() => {
-					Toast.success({
-						message: "Seller meets buyer",
-						time: 2000,
-					});
-
-			}}>ShowAlert</button> */}
+			<BasicModal {...{ ...basicModalProps, "visibility": modalFlag }} />
 		</>
 	);
 };

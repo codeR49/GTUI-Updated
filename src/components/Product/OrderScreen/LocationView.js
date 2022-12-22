@@ -564,41 +564,85 @@ const LocationView = ({
         }
     };
 
-    function codeAddress() {
-        let address;
-        if(product.fflStoreLocation != null){
-            let {licHolderName, premCity, premState, premZipCode } = product.fflStoreLocation;
-            address = `${licHolderName},${premCity},${premState},${premZipCode}`;
-
+    const address1 = () => {
+        if (locationFormValues.pickup === "FFL") {
+            findLatLngFromLocation(`${fflStoreLocation.licHolderName},${fflStoreLocation.premCity},${fflStoreLocation.premState},${fflStoreLocation.premZipCode}`);
         }
-        // else if(product.sheriffOfficeLocation != null){
-
-        // }
-        // else if(product.anyOtherLocations != null){
-
-        // }
-        Geocode.setApiKey("AIzaSyBC7ZclL4mU-l_rP9xB6xYH1WnJiJAnuhM");
-        Geocode.setLanguage("en");
-        // var address = "ACADEMY LTD, JACKSONVILLE, FL, 32225";
-        Geocode.fromAddress(address).then(
-            (response) => {
-              const { lat, lng } = response.results[0].geometry.location;
-
-            //   console.log(lat, lng);
-              setLatitude(lat);
-              setLongitude(lng);
-            },
-            (error) => {
-              console.error(error);
+        else if (locationFormValues.pickup === "SHERIFF_OFFICE") {
+            findLatLngFromLocation(sheriffOffice.address.freeformAddress);
+        }
+            else if (locationFormValues.pickup === "OTHER_LOCATION") {
+            if (JSON.parse(product.anyOtherLocations)?.formatted_address !== null) {
+                findLatLngFromLocation(JSON.parse(product.anyOtherLocations)?.formatted_address)
             }
-          );
-        
+            else if (JSON.parse(product.anyOtherLocations)?.name !== null){
+                findLatLngFromLocation(JSON.parse(product.anyOtherLocations)?.name)
+                
+            }
+        }
+
     }
+
+    const findLatLngFromLocation = (address) => {
+        Geocode.setApiKey("AIzaSyBC7ZclL4mU-l_rP9xB6xYH1WnJiJAnuhM");
+            Geocode.setLanguage("en");
+            // var address = "ACADEMY LTD, JACKSONVILLE, FL, 32225";
+            Geocode.fromAddress(address)
+                .then(
+                    (response) => {
+                        const { lat, lng } = response.results[0].geometry.location;
+
+                        // console.log("ffl "+ "lat: "+ lat+ "lng: "+ lng);
+                        setLatitude(lat);
+                        setLongitude(lng);
+                    },
+                    (error) => {
+                        console.error(error);
+                    }
+                );
+    }
+  
+    useEffect(() => {
+        address1();
+    }, [address1])
+    
+    console.log("lat", latitude);
+    console.log("lng", longitude);
+    // function codeAddress() {
+    //     let address;
+    //     if(product.fflStoreLocation != null){
+    //         let {licHolderName, premCity, premState, premZipCode } = product.fflStoreLocation;
+    //         address = `${licHolderName},${premCity},${premState},${premZipCode}`;
+
+    //     }
+    //     // else if(product.sheriffOfficeLocation != null){
+
+    //     // }
+    //     // else if(product.anyOtherLocations != null){
+
+    //     // }
+    //     Geocode.setApiKey("AIzaSyBC7ZclL4mU-l_rP9xB6xYH1WnJiJAnuhM");
+    //     Geocode.setLanguage("en");
+    //     // var address = "ACADEMY LTD, JACKSONVILLE, FL, 32225";
+    //     Geocode.fromAddress(address).then(
+    //         (response) => {
+    //           const { lat, lng } = response.results[0].geometry.location;
+
+    //         //   console.log(lat, lng);
+    //           setLatitude(lat);
+    //           setLongitude(lng);
+    //         },
+    //         (error) => {
+    //           console.error(error);
+    //         }
+    //       );
+        
+    // }
     
 
-    useEffect(() => {
-        codeAddress();
-    }, [])
+    // useEffect(() => {
+    //     codeAddress();
+    // }, [])
     // console.log(product.fflStoreEnabled);
     // console.log(product.sheriffOfficeLocation.freeformAddress);
     // console.log(product.sheriffOfficeLocation);

@@ -17,3 +17,15 @@
 .nav_right {
     float: right;
 }
+.modal {
+    background: rgba(0, 0, 0, 0.6);
+  }
+  .modal-container {
+    position: absolute;
+  top: 50%;
+    background: #ffffff;
+
+   
+   
+    padding: 20px;
+  }

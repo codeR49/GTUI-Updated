@@ -1,6 +1,6 @@
 let HOSTNAME = window.location.origin; // Storing  a  Host  Name in global variable
 if (HOSTNAME !== null && ((HOSTNAME.indexOf('localhost') !== -1) || (HOSTNAME.indexOf('127.0.0.1') !== -1)))
-    HOSTNAME = "http://50.196.120.251"; // Local development sever will be used from now onwards.
+  HOSTNAME = "https://toolgrazp.net/"; // Local development sever will be used from now onwards.
 
 const GLOBAL_CONSTANTS = Object.freeze({
     HOSTNAME: HOSTNAME,
@@ -1109,43 +1109,43 @@ const GLOBAL_CONSTANTS = Object.freeze({
         },
         BUSINESS_HOUR: [
             {
-                name: "OO:00AM",
+                name: "00:00AM",
                 sid: "00AM"
             },
             {
-                name: "O1:00AM",
+                name: "01:00AM",
                 sid: "01AM"
             },
             {
-                name: "O2:00AM",
+                name: "02:00AM",
                 sid: "02AM"
             },
             {
-                name: "O3:00AM",
+                name: "03:00AM",
                 sid: "03AM"
             },
             {
-                name: "O4:00AM",
+                name: "04:00AM",
                 sid: "04AM"
             },
             {
-                name: "O5:00AM",
+                name: "05:00AM",
                 sid: "05AM"
             },
             {
-                name: "O6:00AM",
+                name: "06:00AM",
                 sid: "06AM"
             },
             {
-                name: "O7:00AM",
+                name: "07:00AM",
                 sid: "07AM"
             },
             {
-                name: "O8:00AM",
+                name: "08:00AM",
                 sid: "08AM"
             },
             {
-                name: "O9:00AM",
+                name: "09:00AM",
                 sid: "09AM"
             },
             {
