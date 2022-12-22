@@ -23,7 +23,7 @@ import { ICN_GEO_LOCATION } from '../icons';
 import { services } from '@tomtom-international/web-sdk-services';
 import DatePicker from 'react-datepicker';
 import { DateInput } from '../Shared/InputType';
-import {useConfirmationModal} from '../../commons/ConfirmationModal/ConfirmationModalHook';
+import { useConfirmationModal } from '../../commons/ConfirmationModal/ConfirmationModalHook';
 let getAddress1 = require('extract-country-state-city-from-zip');
 
 let tabWiseData = {
@@ -108,8 +108,8 @@ const layawayFeesList = [
 ];
 
 let defaultBusinessInfoValues = {
-    openingHour: '10AM',
-    closingHour: '10PM',
+    openingHour: '09AM',
+    closingHour: '05PM',
     fflStoreHasSpecialities: _.cloneDeep(specialityList),
     yearsOfExperience: "",
     appraisalEnabled: false,
@@ -202,19 +202,28 @@ const BasicInfo = ({ setTab, cancelStoreSetup, className = "", resetStoreSetup, 
     // }
 
     useEffect(() => {
-        if(!userDetails?.user?.sid){
+        if (!userDetails?.user?.sid) {
             history.push('/');
         }
-    },[])
+    }, [])
 
     useEffect(() => {
         tabWiseData = { ...tabWiseData, "storeInfo": { ...tabWiseData.storeInfo, "latitude": selectedLocation.lat, "longitude": selectedLocation.lng } }
     }, [selectedLocation])
 
     const schema = Yup.object().shape({
-        licRegn: Yup.number().min(1).required("Required!"),
-        licDist: Yup.number().min(1).required("Required!"),
-        licSeqn: Yup.number().min(5).required("Required!"),
+        licRegn: Yup.number()
+            .min(1, "In the range 1 to 9")
+            .lessThan(10, "In the range 1 to 9")    
+            .required("Required!")
+            .test(
+                'no-leading-zero',
+                'Leading zero is not allowed',
+                (value, context) => {
+                  return context.originalValue && !context.originalValue.startsWith('0');
+                }),
+        licDist: Yup.number().min(0).required("Required!"),
+        licSeqn: Yup.number().min(0).required("Required!"),
         name: Yup.string()
             .matches(("^(?!.*<[0-9a-zA-Z_]+>)"), "HTML tag is not allow")
             .max(100, "100 Characters Maximum")
@@ -243,7 +252,7 @@ const BasicInfo = ({ setTab, cancelStoreSetup, className = "", resetStoreSetup, 
             .required("Required!"),
         premiseZipCode: Yup.string()
             .required("Required!"),
-            licenseExpireOn: Yup.string()
+        licenseExpireOn: Yup.string()
             .required("Required!"),
     });
 
@@ -365,11 +374,11 @@ const BasicInfo = ({ setTab, cancelStoreSetup, className = "", resetStoreSetup, 
     }
 
     useEffect(() => {
-        if(licNumberInfo 
-            && licNumberInfo.licDist 
-            && licNumberInfo.licRegn 
-            && licNumberInfo.licSeqn ) {
-                 getFFLStoreBasicInfo(licNumberInfo);
+        if (licNumberInfo
+            && licNumberInfo.licDist
+            && licNumberInfo.licRegn
+            && licNumberInfo.licSeqn) {
+            getFFLStoreBasicInfo(licNumberInfo);
         }
     }, [licNumberInfo])
 
@@ -398,6 +407,9 @@ const BasicInfo = ({ setTab, cancelStoreSetup, className = "", resetStoreSetup, 
         tabWiseData.storeInfo = { ...tabWiseData.storeInfo, ...values, ...licNumberInfo };
         tabWiseData.storeInfo.license = files[0].fileName;
         tabWiseData.storeInfo.licenseNumber = values.licRegn + '-' + values.licDist + '-xxx-xx-xx-' + values.licSeqn;
+        tabWiseData.storeInfo.email = values.email;
+        tabWiseData.storeInfo.description = values.description;
+        tabWiseData.storeInfo.contactEmailAddress = values.contactEmailAddress;
         const payload = getMyPayload();
         spinner.show("Please wait...");
         ApiService.addStore(userDetails.user.sid, payload).then(
@@ -414,15 +426,15 @@ const BasicInfo = ({ setTab, cancelStoreSetup, className = "", resetStoreSetup, 
         });
     }
 
-    
+
 
     const validateBasicStoreForm = (isValid, dirty, tmpLocation) => {
         let isFormValid = false;
         try {
-            if(
-                (!isValid 
-                || !files.length 
-                || (!dirty && !tabWiseData.isUnReviewed))
+            if (
+                (!isValid
+                    || !files.length
+                    || (!dirty && !tabWiseData.isUnReviewed))
                 || tmpLocation.lat === ""
             ) isFormValid = true;
         } catch (err) {
@@ -434,7 +446,7 @@ const BasicInfo = ({ setTab, cancelStoreSetup, className = "", resetStoreSetup, 
     // show reset confirmation modal when user click on conform
     const [showConfirmModal, ConfirmationComponent] = useConfirmationModal({
         title: "Are you sure?",
-        body: <p>All the data you have entered will be cleared!<br/></p>,
+        body: <p>All the data you have entered will be cleared!<br /></p>,
 
         onConfirm: () => {
             onResetStoreInfo();
@@ -442,8 +454,8 @@ const BasicInfo = ({ setTab, cancelStoreSetup, className = "", resetStoreSetup, 
         onCancel: () => { }
     })
 
-    const onResetStoreInfo = () =>{
-        try{
+    const onResetStoreInfo = () => {
+        try {
             spinner.show("Please wait...");
             if (tabWiseData.sid === null) {
                 formikStoreInfo.current?.resetForm();
@@ -459,13 +471,13 @@ const BasicInfo = ({ setTab, cancelStoreSetup, className = "", resetStoreSetup, 
             }
             else {
                 resetStoreSetup();
-                formikStoreInfo.current?.resetForm();                
+                formikStoreInfo.current?.resetForm();
             }
             spinner.hide();
             window.location.reload();
 
 
-        }catch (err) {
+        } catch (err) {
             console.error("Exception occurred in onResetStoreInfo --- " + err);
         }
     }
@@ -494,7 +506,7 @@ const BasicInfo = ({ setTab, cancelStoreSetup, className = "", resetStoreSetup, 
      * @param {string} value - This city & state of value
      * @param {Function} setFieldValue - This is set the value of state and city.
      */
-     const getCountry = (data, values) => {
+    const getCountry = (data, values) => {
         try {
             let FFLZipCode = data.premZipCode
             if (FFLZipCode.length >= 5) {
@@ -554,9 +566,9 @@ const BasicInfo = ({ setTab, cancelStoreSetup, className = "", resetStoreSetup, 
     }, [isResetForm])
 
     useEffect(() => {
-        if(defaultBasicInfoValues.latitude) 
-        // getMyLocation({ "lat": Number(defaultBasicInfoValues.latitude), "lng": Number(defaultBasicInfoValues.longitude) });
-        setInitialValues(defaultBasicInfoValues);
+        if (defaultBasicInfoValues.latitude)
+            // getMyLocation({ "lat": Number(defaultBasicInfoValues.latitude), "lng": Number(defaultBasicInfoValues.longitude) });
+            setInitialValues(defaultBasicInfoValues);
         setLicInitialValues({
             ...{
                 licRegn: defaultBasicInfoValues.licRegn,
@@ -611,7 +623,7 @@ const BasicInfo = ({ setTab, cancelStoreSetup, className = "", resetStoreSetup, 
                                 innerRef={licInnerRef}
                                 enableReinitialize={true}
                                 validationSchema={schema}
-                                initialValues={licInitialValues}>
+                                initialValues={{ ...licInitialValues, description: '', email: '', contactEmailAddress: '' }}>
                                 {({ handleSubmit, isSubmitting, handleChange, handleBlur, touched, errors, values, isValid, dirty, setFieldValue, resetForm }) => (
                                     <Form noValidate>
                                         <FormikCotext {...{ callback: (val) => handleChangeByChange(val) }} />
@@ -635,7 +647,7 @@ const BasicInfo = ({ setTab, cancelStoreSetup, className = "", resetStoreSetup, 
                                                             }}
                                                             onBlur={handleBlur}
                                                             isInvalid={!!errors.licRegn}
-                                                            pattern="[0-9]*"
+
                                                         />
                                                         <Form.Control.Feedback type="invalid">
                                                             {errors.licRegn}
@@ -696,7 +708,7 @@ const BasicInfo = ({ setTab, cancelStoreSetup, className = "", resetStoreSetup, 
                                 validationSchema={schema}
                                 initialValues={initialValues}
                                 onSubmit={initPartiallySaveStore}>
-                                {({ handleSubmit, isSubmitting, handleChange, setFieldValue,handleBlur, touched, errors, values, isValid, dirty, resetForm }) => (
+                                {({ handleSubmit, isSubmitting, handleChange, setFieldValue, handleBlur, touched, errors, values, isValid, dirty, resetForm }) => (
                                     <Form noValidate>
                                         <div className="form-group text-left">
                                             <Form.Group>
@@ -772,8 +784,8 @@ const BasicInfo = ({ setTab, cancelStoreSetup, className = "", resetStoreSetup, 
                                                     </Form.Group>
                                                 </div>
                                             </div>
-                                            
-                                            
+
+
                                             <Form.Group>
                                                 <Form.Label class="p-0"><h5 class="label-head mb-0">Email Address<sup>*</sup></h5></Form.Label>
                                                 <Form.Control
@@ -820,7 +832,7 @@ const BasicInfo = ({ setTab, cancelStoreSetup, className = "", resetStoreSetup, 
                                                     onChange={handleChange}
                                                     onBlur={handleBlur}
                                                     className={classNames("", { "border border-danger": errors.contactEmailAddress })}
-                                                    isInvalid={!!errors.contactEmailAddress }
+                                                    isInvalid={!!errors.contactEmailAddress}
                                                 />
                                                 <Form.Control.Feedback type="invalid">
                                                     {errors.contactEmailAddress}
@@ -976,30 +988,30 @@ const BasicInfo = ({ setTab, cancelStoreSetup, className = "", resetStoreSetup, 
 
                                                 </div>
                                             </div> */}
-                                            
+
                                             <div className="row">
                                                 <div className="col-lg-12">
                                                     <h5 className="label-head mb-2">Licence Doc<sup>*</sup>(<i className="hint-color">mandatory to upload doc</i>)</h5>
                                                     <div className="form-group">
                                                         <Form.Group>
-                                                        <input readOnly type="text" 
-                                                        required="required" 
-                                                        placeholder="Upload a copy of your FFL License"
-                                                        onBlur={handleBlur}
-                                                        isInvalid={!!errors.doc}
-                                                        className={classNames("form-control ac-doc-setup", { "border border-danger": !files.length})}
-                                                        name="doc" 
-                                                        value={licenceDoc.split('/').pop()} 
-                                                        id="doc" 
-                                                        onClick={initVerifyUpload} />
-                                                        <input type="file" 
-                                                        accept=".jpg,.png,.pdf,.doc,.docx,.xls,.xlsx,application/msword" 
-                                                        className="form-control upload-input" onChange={uploadFiles} />
-                                                        <Form.Control.Feedback type="invalid">
-                                                            {errors.doc}
-                                                        </Form.Control.Feedback>
+                                                            <input readOnly type="text"
+                                                                required="required"
+                                                                placeholder="Upload a copy of your FFL License"
+                                                                onBlur={handleBlur}
+                                                                isInvalid={!!errors.doc}
+                                                                className={classNames("form-control ac-doc-setup", { "border border-danger": !files.length })}
+                                                                name="doc"
+                                                                value={licenceDoc.split('/').pop()}
+                                                                id="doc"
+                                                                onClick={initVerifyUpload} />
+                                                            <input type="file"
+                                                                accept=".jpg,.png,.pdf,.doc,.docx,.xls,.xlsx,application/msword"
+                                                                className="form-control upload-input" onChange={uploadFiles} />
+                                                            <Form.Control.Feedback type="invalid">
+                                                                {errors.doc}
+                                                            </Form.Control.Feedback>
                                                         </Form.Group>
-                                                        
+
                                                         <p className="fild-caption">If you choose to upload a copy of your signed and dated FFL License, you must write "For Transfer Only" on the uploaded document, We will email this to the seller if the buyer chooses you.
                                                         </p>
                                                     </div>
@@ -1026,31 +1038,31 @@ const BasicInfo = ({ setTab, cancelStoreSetup, className = "", resetStoreSetup, 
                                                     </Form.Group>
                                                 </div>
                                             </div>
-                                            
+
                                         </div>
 
                                         <div id="product-pgBtn-section">
                                             <div className="row justify-content-end action-footer-setup-store pr-3 pt-4">
                                                 {
-                                                    tabWiseData.approvalStatus === 'NOT_SUBMITTED' 
-                                                    && <input 
-                                                        type="button" 
-                                                        name="reset" 
-                                                        className="reset-btn reset-btn-width" 
-                                                        value="Reset" 
+                                                    tabWiseData.approvalStatus === 'NOT_SUBMITTED'
+                                                    && <input
+                                                        type="button"
+                                                        name="reset"
+                                                        className="reset-btn reset-btn-width"
+                                                        value="Reset"
                                                         onClick={() => {
                                                             showConfirmModal();
-                                                        }} 
+                                                        }}
                                                     />
                                                 }
                                                 <input type="button" name="cancel" className="cancel-btn cancel-btn-width" value="Cancel" onClick={cancelStoreSetup} />
-                                                <input 
-                                                    onClick={handleSubmit} 
-                                                    disabled={validateBasicStoreForm(isValid, selectedLocation)} 
-                                                    type="button" 
-                                                    name="next" 
-                                                    className="next action-button save-btn" 
-                                                    value="Save & Continue" 
+                                                <input
+                                                    onClick={handleSubmit}
+                                                    disabled={validateBasicStoreForm(isValid, selectedLocation)}
+                                                    type="button"
+                                                    name="next"
+                                                    className="next action-button save-btn"
+                                                    value="Save & Continue"
                                                 />
                                             </div>
                                         </div>
@@ -1076,7 +1088,7 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
     const [initialValues, setInitialValues] = useState(defaultBusinessInfoValues);
     const [uploadIndex, setUploadIndex] = useState('');
     const formikRef = useRef();
-    
+
     const schema = Yup.object().shape({
         openingHour: Yup.string()
             .required("Required!"),
@@ -1203,21 +1215,21 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
     // show reset confirmation modal when user click on conform
     const [showConfirmModal, ConfirmationComponent] = useConfirmationModal({
         title: "Are you sure?",
-        body: <p>All the data you have entered will be cleared!<br/></p>,
+        body: <p>All the data you have entered will be cleared!<br /></p>,
         onConfirm: () => {
             onResetBusinessInfo();
         },
         onCancel: () => { }
     })
 
-    const onResetBusinessInfo = () =>{
-        try{
+    const onResetBusinessInfo = () => {
+        try {
             spinner.show("Please wait...");
             formikRef.current?.resetForm();
             setInitialValues(defaultBusinessInfoValues);
             goToTopOfWindow();
             spinner.hide();
-        }catch (err) {
+        } catch (err) {
             console.error("Exception occurred in onResetForm --- " + err);
         }
     }
@@ -1257,9 +1269,24 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                                             isInvalid={!!errors.openingHour}
                                                         >
                                                             {listOfBusinessHours.map((list, index) => {
-                                                                return <option key={list.sid} value={list.sid}>{list.name}</option>
+                                                                return <>
+
+                                                                    <option key={list.sid} value={list.sid}>{list.name}</option>
+
+                                                                </>
                                                             })}
+
                                                         </Form.Control>
+
+
+
+
+                                                        {/* <select name="cars" id="cars" className="p-2 text-center">
+  <option value="volvo">1</option>
+  <option value="saab">2</option>
+  <option value="mercedes">4</option>
+  <option value="audi">5</option>
+</select> */}
                                                         <Form.Control.Feedback type="invalid">
                                                             {errors.openingHour}
                                                         </Form.Control.Feedback>
@@ -1292,7 +1319,7 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                         {
                                             values.fflStoreHasSpecialities.map((list, index) => {
                                                 return <Form.Group className="Specialityblock" key={index}>
-                                                    <Form.Check onChange={handleChange} type="checkbox" checked={values.fflStoreHasSpecialities[index].isChecked} name={`fflStoreHasSpecialities.${index}.isChecked`} id={`dss-fflStoreHasSpecialities.${index}.isChecked`} label={list.label } className="form-checklabel-padding" />
+                                                    <Form.Check onChange={handleChange} type="checkbox" checked={values.fflStoreHasSpecialities[index].isChecked} name={`fflStoreHasSpecialities.${index}.isChecked`} id={`dss-fflStoreHasSpecialities.${index}.isChecked`} label={list.label} className="form-checklabel-padding" />
                                                     {
                                                         list.isChecked && <div className="upload-certificates-block ml-4">
                                                             <div className="title ml-2">Upload certificates</div>
@@ -1337,10 +1364,10 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                                         <Form.Group as={Row}>
                                                             <div className="col-lg-12 d-flex justify-content-between m-2">
                                                                 <div className="radio-btn p-2">
-                                                                    <Form.Check onChange={handleChange} type="radio" value="PERCENTAGE" id="dss-P-appraisalFeeType"  name="appraisalFeeType" label="Percentage(%)" className="form-checklabel-padding"/>
+                                                                    <Form.Check onChange={handleChange} type="radio" value="PERCENTAGE" id="dss-P-appraisalFeeType" name="appraisalFeeType" label="Percentage(%)" className="form-checklabel-padding" />
                                                                 </div>
                                                                 <div className="radio-btn p-2">
-                                                                    <Form.Check onChange={handleChange} type="radio" value="FIXED_PRICE" id="dss-F-appraisalFeeType"  name="appraisalFeeType" label="Fixed Price($)" className="form-checklabel-padding"/>
+                                                                    <Form.Check onChange={handleChange} type="radio" value="FIXED_PRICE" id="dss-F-appraisalFeeType" name="appraisalFeeType" label="Fixed Price($)" className="form-checklabel-padding" />
                                                                 </div>
                                                             </div>
                                                         </Form.Group>
@@ -1450,7 +1477,7 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                                                             value={values.appraisalFeeFixedPriceTill500}
                                                                             onChange={handleChange}
                                                                             onPaste={e => e.preventDefault()}
-                                                                            onKeyDown={(e) => { ((e.keyCode !== 8) && (e.keyCode < 48 || e.keyCode >= 58) && (e.keyCode < 96 || e.keyCode > 105)) && e.preventDefault()}}
+                                                                            onKeyDown={(e) => { ((e.keyCode !== 8) && (e.keyCode < 48 || e.keyCode >= 58) && (e.keyCode < 96 || e.keyCode > 105)) && e.preventDefault() }}
                                                                             //onKeyDown={e => ((e.keyCode === 109 || e.keyCode === 189 || e.keyCode === 69 || e.keyCode === 110 || e.keyCode === 190 || e.keyCode === 107 || e.keyCode === 187) && e.preventDefault())}
                                                                             isInvalid={!!errors.appraisalFeeFixedPriceTill500}
                                                                         />
@@ -1476,7 +1503,7 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                                                             value={values.appraisalFeeFixedPriceTill1000}
                                                                             onChange={handleChange}
                                                                             onPaste={e => e.preventDefault()}
-                                                                            onKeyDown={(e) => { ((e.keyCode !== 8) && (e.keyCode < 48 || e.keyCode >= 58) && (e.keyCode < 96 || e.keyCode > 105)) && e.preventDefault()}}
+                                                                            onKeyDown={(e) => { ((e.keyCode !== 8) && (e.keyCode < 48 || e.keyCode >= 58) && (e.keyCode < 96 || e.keyCode > 105)) && e.preventDefault() }}
                                                                             //onKeyDown={e => ((e.keyCode === 109 || e.keyCode === 189 || e.keyCode === 69 || e.keyCode === 110 || e.keyCode === 190 || e.keyCode === 107 || e.keyCode === 187) && e.preventDefault())}
                                                                             isInvalid={!!errors.appraisalFeeFixedPriceTill1000}
                                                                         />
@@ -1502,7 +1529,7 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                                                             value={values.appraisalFeeFixedPriceAbove1000}
                                                                             onChange={handleChange}
                                                                             onPaste={e => e.preventDefault()}
-                                                                            onKeyDown={(e) => { ((e.keyCode !== 8) && (e.keyCode < 48 || e.keyCode >= 58) && (e.keyCode < 96 || e.keyCode > 105)) && e.preventDefault()}}
+                                                                            onKeyDown={(e) => { ((e.keyCode !== 8) && (e.keyCode < 48 || e.keyCode >= 58) && (e.keyCode < 96 || e.keyCode > 105)) && e.preventDefault() }}
                                                                             isInvalid={!!errors.appraisalFeeFixedPriceAbove1000}
                                                                         />
                                                                         <Form.Control.Feedback type="invalid">
@@ -1581,7 +1608,7 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                                         <Form.Group as={Row}>
                                                             <div className="col-lg-12 d-flex justify-content-between">
                                                                 <div className="radio-btn p-2">
-                                                                    <Form.Check onChange={handleChange} id="dss-inspectionEnabled-l1" type="radio" value="1" name="inspectionLevel" label="Level 1" className="form-checklabel-padding"/>
+                                                                    <Form.Check onChange={handleChange} id="dss-inspectionEnabled-l1" type="radio" value="1" name="inspectionLevel" label="Level 1" className="form-checklabel-padding" />
                                                                 </div>
                                                                 <div className="radio-btn p-2">
                                                                     <Form.Check onChange={handleChange} id="dss-inspectionEnabled-l2" type="radio" value="2" name="inspectionLevel" label="Level 2" className="form-checklabel-padding" />
@@ -1632,7 +1659,7 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                                                                 name="inspectionFee"
                                                                                 value={values.inspectionFee}
                                                                                 onPaste={e => e.preventDefault()}
-                                                                                onKeyDown={(e) => { ((e.keyCode !== 8) && (e.keyCode < 48 || e.keyCode >= 58) && (e.keyCode < 96 || e.keyCode > 105)) && e.preventDefault()}}
+                                                                                onKeyDown={(e) => { ((e.keyCode !== 8) && (e.keyCode < 48 || e.keyCode >= 58) && (e.keyCode < 96 || e.keyCode > 105)) && e.preventDefault() }}
                                                                                 onChange={handleChange}
                                                                                 isInvalid={!!errors.inspectionFee}
                                                                             />
@@ -1649,7 +1676,7 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                             </div>
                                         }
                                         <Form.Group className="">
-                                            <Form.Check onChange={handleChange} onBlur={handleBlur} checked={values.classesEnabled} type="checkbox" name="classesEnabled" id="dss-classesEnabled" label="Classes" className="form-checklabel-padding"/>
+                                            <Form.Check onChange={handleChange} onBlur={handleBlur} checked={values.classesEnabled} type="checkbox" name="classesEnabled" id="dss-classesEnabled" label="Classes" className="form-checklabel-padding" />
                                         </Form.Group>
                                         {
                                             values.classesEnabled &&
@@ -1657,7 +1684,7 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                                 <div className="row">
                                                     <div className="col-lg-12">
                                                         <Form.Group className="">
-                                                            <Form.Check onChange={handleChange} type="checkbox" name="permitClassesEnabled" id="dss-permitClassesEnabled" label="Permit Classes" className="form-checklabel-padding"/>
+                                                            <Form.Check onChange={handleChange} type="checkbox" name="permitClassesEnabled" id="dss-permitClassesEnabled" label="Permit Classes" className="form-checklabel-padding" />
                                                         </Form.Group>
                                                     </div>
                                                 </div>
@@ -1682,7 +1709,7 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                                                                     name="permitClassFee"
                                                                                     value={values.permitClassFee}
                                                                                     onPaste={e => e.preventDefault()}
-                                                                                    onKeyDown={(e) => { ((e.keyCode !== 8) && (e.keyCode < 48 || e.keyCode >= 58) && (e.keyCode < 96 || e.keyCode > 105)) && e.preventDefault()}}
+                                                                                    onKeyDown={(e) => { ((e.keyCode !== 8) && (e.keyCode < 48 || e.keyCode >= 58) && (e.keyCode < 96 || e.keyCode > 105)) && e.preventDefault() }}
                                                                                     onChange={handleChange}
                                                                                     isInvalid={!!errors.permitClassFee}
                                                                                 />
@@ -1700,7 +1727,7 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                                 <div className="row">
                                                     <div className="col-lg-12">
                                                         <Form.Group className="">
-                                                            <Form.Check onChange={handleChange} type="checkbox" name="trainingClassesEnabled" id="dss-trainingClassesEnabled" label="Training Classes" className="form-checklabel-padding"/>
+                                                            <Form.Check onChange={handleChange} type="checkbox" name="trainingClassesEnabled" id="dss-trainingClassesEnabled" label="Training Classes" className="form-checklabel-padding" />
                                                         </Form.Group>
 
                                                     </div>
@@ -1726,7 +1753,7 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                                                                     name="trainingClassFee"
                                                                                     value={values.trainingClassFee}
                                                                                     onPaste={e => e.preventDefault()}
-                                                                                    onKeyDown={(e) => { ((e.keyCode !== 8) && (e.keyCode < 48 || e.keyCode >= 58) && (e.keyCode < 96 || e.keyCode > 105)) && e.preventDefault()}}
+                                                                                    onKeyDown={(e) => { ((e.keyCode !== 8) && (e.keyCode < 48 || e.keyCode >= 58) && (e.keyCode < 96 || e.keyCode > 105)) && e.preventDefault() }}
                                                                                     onChange={handleChange}
                                                                                     isInvalid={!!errors.trainingClassFee}
                                                                                 />
@@ -1744,7 +1771,7 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                             </div>
                                         }
                                         <Form.Group className="">
-                                            <Form.Check onChange={handleChange} onBlur={handleBlur} checked={values.fflSaleEnabled} type="checkbox" name="fflSaleEnabled" id="dss-fflSaleEnabled" label="FFL Sale (Peer to Peer)" className="form-checklabel-padding"/>
+                                            <Form.Check onChange={handleChange} onBlur={handleBlur} checked={values.fflSaleEnabled} type="checkbox" name="fflSaleEnabled" id="dss-fflSaleEnabled" label="FFL Sale (Peer to Peer)" className="form-checklabel-padding" />
                                         </Form.Group>
                                         {
                                             values.fflSaleEnabled &&
@@ -1765,7 +1792,7 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                                                             name="fflSaleFee"
                                                                             value={values.fflSaleFee}
                                                                             onPaste={e => e.preventDefault()}
-                                                                            onKeyDown={(e) => { ((e.keyCode !== 8) && (e.keyCode < 48 || e.keyCode >= 58) && (e.keyCode < 96 || e.keyCode > 105)) && e.preventDefault()}}
+                                                                            onKeyDown={(e) => { ((e.keyCode !== 8) && (e.keyCode < 48 || e.keyCode >= 58) && (e.keyCode < 96 || e.keyCode > 105)) && e.preventDefault() }}
                                                                             //onKeyDown={e => ((e.keyCode === 109 || e.keyCode === 189 || e.keyCode === 69 || e.keyCode === 110 || e.keyCode === 190 || e.keyCode === 107 || e.keyCode === 187) && e.preventDefault())}
                                                                             onChange={handleChange}
                                                                             isInvalid={!!errors.fflSaleFee}
@@ -1785,11 +1812,11 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                         <div id="product-pgBtn-section">
                                             <div className="row justify-content-end action-footer-setup-store pr-3 pt-4">
 
-                                                {tabWiseData.approvalStatus === 'NOT_SUBMITTED' && 
-                                                <input type="button" name="reset" className="reset-btn reset-btn-width" value="Reset" 
-                                                onClick={() => {
-                                                    showConfirmModal();
-                                                }} />}
+                                                {tabWiseData.approvalStatus === 'NOT_SUBMITTED' &&
+                                                    <input type="button" name="reset" className="reset-btn reset-btn-width" value="Reset"
+                                                        onClick={() => {
+                                                            showConfirmModal();
+                                                        }} />}
                                                 <input type="button" name="cancel" className="cancel-btn cancel-btn-width" value="Cancel" onClick={cancelStoreSetup} />
                                                 <input onClick={handleSubmit} disabled={(!isValid || (!dirty && !tabWiseData.isUnReviewed))} type="button" name="next" className="next action-button save-btn" value="Save & Continue" />
                                             </div>
@@ -2139,8 +2166,8 @@ const StepsToSetup = ({ tab, setTab, setHasPartiallySubmitted }) => {
             isFetched: false
         };
         defaultBusinessInfoValues = {
-            openingHour: '10AM',
-            closingHour: '10PM',
+            openingHour: '09AM',
+            closingHour: '05PM',
             fflStoreHasSpecialities: _.cloneDeep(specialityList),
             yearsOfExperience: "",
             appraisalEnabled: false,
@@ -2184,7 +2211,7 @@ const StepsToSetup = ({ tab, setTab, setHasPartiallySubmitted }) => {
                 };
                 setIsResetForm(true);
                 resetDefaultValues();
-                if(tab != 'basicInfo') {
+                if (tab != 'basicInfo') {
                     onStepFrontBack('basicInfo', 0);
                 };
                 goToTopOfWindow();
@@ -2226,7 +2253,7 @@ const StepsToSetup = ({ tab, setTab, setHasPartiallySubmitted }) => {
                         <div className="col-md-12 mx-0">
                             <div className="noRadious">
                                 <div className="justify-content-between">
-                                    <BasicInfo className={tab === "basicInfo" ? 'd-block' : "d-none"} {...{ setTab, cancelStoreSetup, resetStoreSetup, isResetForm, setHasPartiallySubmitted}} />
+                                    <BasicInfo className={tab === "basicInfo" ? 'd-block' : "d-none"} {...{ setTab, cancelStoreSetup, resetStoreSetup, isResetForm, setHasPartiallySubmitted }} />
                                     <BusinessInfo className={tab === "businessInfo" ? 'd-block' : "d-none"} {...{ setTab, cancelStoreSetup, resetStoreSetup }} />
                                     <StorePreview className={tab === "accountSetup" ? 'd-block' : "d-none"} {...{ setTab, cancelStoreSetup, setStoreSubmitted, resetStoreSetup }} />
                                     <StoreSubmit className={tab === "preview" ? 'd-block' : "d-none"} {...{ setTab, tab }} />
@@ -2273,10 +2300,10 @@ function SetupStore(props) {
             })
         }
         if (_.isEmpty(storeInfo.openingHour)) {
-            storeInfo.openingHour = '10AM';
+            storeInfo.openingHour = '09AM';
         }
         if (_.isEmpty(storeInfo.closingHour)) {
-            storeInfo.closingHour = '10PM';
+            storeInfo.closingHour = '05PM';
         }
         // Business Default Values
         storeInfo.appraisalFeeType = _.isEmpty(storeInfo.appraisalFeeType) ? 'PERCENTAGE' : storeInfo.appraisalFeeType;
@@ -2303,48 +2330,48 @@ function SetupStore(props) {
 
     // populate store information
     const populateStoreInfo = (isRejectedStores) => {
-        if(userDetails.user.sid){
+        if (userDetails.user.sid) {
             spinner.show("Please wait...");
-        ApiService.populateUnSavedStore(userDetails.user.sid).then(
-            response => {
-                tabWiseData = {
-                    storeInfo: {},
-                    businessInfo: {
-                        fflStoreHasSpecialities: []
-                    },
-                    isUnReviewed: false,
-                    sid: null,
-                    approvalStatus: 'NOT_SUBMITTED'
-                };
-                const isUnReviewedStore = _.filter(!_.isEmpty(response.data) ? response.data : isRejectedStores, { approvalStatus: !_.isEmpty(response.data) ? 'NOT_SUBMITTED' : "REJECTED" });
-                if (isUnReviewedStore && isUnReviewedStore.length) {
-                    setStoreInfo({ ...isUnReviewedStore[0], "approvalStatus": "NOT_SUBMITTED" });
-                    tabWiseData.isUnReviewed = true;
-                    tabWiseData.sid = isUnReviewedStore[0].sid;
-                    tabWiseData.approvalStatus = 'NOT_SUBMITTED';
-                    setHasPartiallySubmitted(true);
+            ApiService.populateUnSavedStore(userDetails.user.sid).then(
+                response => {
+                    tabWiseData = {
+                        storeInfo: {},
+                        businessInfo: {
+                            fflStoreHasSpecialities: []
+                        },
+                        isUnReviewed: false,
+                        sid: null,
+                        approvalStatus: 'NOT_SUBMITTED'
+                    };
+                    const isUnReviewedStore = _.filter(!_.isEmpty(response.data) ? response.data : isRejectedStores, { approvalStatus: !_.isEmpty(response.data) ? 'NOT_SUBMITTED' : "REJECTED" });
+                    if (isUnReviewedStore && isUnReviewedStore.length) {
+                        setStoreInfo({ ...isUnReviewedStore[0], "approvalStatus": "NOT_SUBMITTED" });
+                        tabWiseData.isUnReviewed = true;
+                        tabWiseData.sid = isUnReviewedStore[0].sid;
+                        tabWiseData.approvalStatus = 'NOT_SUBMITTED';
+                        setHasPartiallySubmitted(true);
+                    }
+                    if (tabWiseData.businessInfo.yearsOfExperience && tabWiseData.storeInfo.name && tabWiseData.storeInfo.latitude && tabWiseData.storeInfo.longitude) {
+                        $('#accountSetup').addClass('active');
+                        $('#businessInfo').addClass('active');
+                        setTab('accountSetup');
+                    } else if (!tabWiseData.businessInfo.yearsOfExperience && tabWiseData.storeInfo.name && tabWiseData.storeInfo.latitude && tabWiseData.storeInfo.longitude) {
+                        $('#businessInfo').addClass('active');
+                        setTab('businessInfo');
+                    } else {
+                        $('#basicInfo').addClass('active');
+                        setTab('basicInfo');
+                    }
+                    goToTopOfWindow();
+                },
+                err => {
+                    Toast.error({ message: err.response?.data ? (err.response?.data.error || err.response?.data.status) : '', time: 2000 });
                 }
-                if(tabWiseData.businessInfo.yearsOfExperience && tabWiseData.storeInfo.name && tabWiseData.storeInfo.latitude && tabWiseData.storeInfo.longitude){
-                    $('#accountSetup').addClass('active');
-                    $('#businessInfo').addClass('active');
-                    setTab('accountSetup');
-                   }else if(!tabWiseData.businessInfo.yearsOfExperience && tabWiseData.storeInfo.name && tabWiseData.storeInfo.latitude && tabWiseData.storeInfo.longitude){
-                    $('#businessInfo').addClass('active');
-                    setTab('businessInfo');
-                   }else{
-                    $('#basicInfo').addClass('active');
-                    setTab('basicInfo');
-                   }
-                goToTopOfWindow();
-            },
-            err => {
-                Toast.error({ message: err.response?.data ? (err.response?.data.error || err.response?.data.status) : '', time: 2000 });
-            }
-        ).finally(() => {
-            spinner.hide();
-        });
+            ).finally(() => {
+                spinner.hide();
+            });
         }
-        
+
     }
 
     // get store list list
@@ -2385,7 +2412,7 @@ function SetupStore(props) {
                             {
                                 ((hasPartiallySubmitted && tabWiseData.sid)
                                     || (!hasPartiallySubmitted))
-                                && <StepsToSetup {...{tab, setTab, setHasPartiallySubmitted}} />
+                                && <StepsToSetup {...{ tab, setTab, setHasPartiallySubmitted }} />
                             }
                         </div>
                     </div>

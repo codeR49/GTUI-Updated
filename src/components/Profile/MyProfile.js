@@ -1,8 +1,11 @@
-import React, { useEffect, useState, useContext, memo } from 'react';
+import React, { useEffect, useState, useContext, memo, useRef } from 'react';
 import { Formik, Field, ErrorMessage } from "formik"
 import Input, { isValidPhoneNumber } from 'react-phone-number-input/input'
 import { Form } from 'react-bootstrap';
 import ApiService from '../../services/api.service';
+import { services } from '@tomtom-international/web-sdk-services';
+import GLOBAL_CONSTANTS from '../../Constants/GlobalConstants';
+import classNames from 'classnames';
 import { useAuthState, useAuthDispatch } from '../../contexts/AuthContext/context';
 import { MAP_API_KEY } from '../../commons/utils';
 import _ from "lodash";
@@ -14,6 +17,7 @@ import { useHistory } from 'react-router-dom';
 import * as Yup from 'yup';
 import useToast from '../../commons/ToastHook';
 import DatePicker from "react-datepicker";
+import { ICN_GEO_LOCATION } from '../icons';
 import "react-datepicker/dist/react-datepicker.css";
 let getAddress1 = require('extract-country-state-city-from-zip');
 
@@ -33,6 +37,15 @@ const MyProfile = () => {
     const [isLatitude, setIsLatitude] = useState();
     const [isLongitude, setIsLongitude] = useState();
     const [userInfo, setUserInfo] = useState();
+    const [locationErr, setLocationErr] = useState(null);
+    const setHomeAddressRefs = useRef(null);
+    const [isHomeAddress, setIsHomeAddress] = useState("");
+   
+    const [isSetHomeAddress, setIsSetHomeAddress] = useState({
+        lat: "",
+        lng: "",
+        info: {},
+    });
     const [myProfile, setMyProfile] = useState({
         email: '',
         firstName: '',
@@ -60,8 +73,8 @@ const MyProfile = () => {
         email: Yup.string()
             .email("Invalid email format")
             .required("Required!"),
-        dateOfBirth: Yup.string()
-            .required("Required!"),
+        // dateOfBirth: Yup.string()
+        //     .required("Required!"),
         apartmentNumber: Yup.string()
             .required("Required!"),
         city: Yup.string()
@@ -73,7 +86,7 @@ const MyProfile = () => {
             .matches(/^[0-9]+$/, "Must be only digits")
             .min(5, 'Must be exactly 5 digits')
             .max(5, 'Must be exactly 5 digits'),
-        dateOfBirth: Yup.string().required("Enter your date of birth")
+        // dateOfBirth: Yup.string().required("Enter your date of birth")
     })
 
     /**
@@ -92,6 +105,72 @@ const MyProfile = () => {
         });
     }
 
+    const geoFindMe = (setFieldValue) => {
+        if (!navigator.geolocation) {
+            Toast.error({ message: 'Geolocation is not supported by your browser', time: 3000 });
+            return;
+        }
+        spinner.show("Fetching your location... Please wait...");
+        function success(position) {
+            setTimeout(() => {
+                getMyLocation({
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                });
+                setFieldValue("latitude", position.coords.latitude);
+                setFieldValue("longitude", position.coords.longitude);
+                setLocationErr(null);
+            }, 1200);
+        }
+        function error(err) {
+            spinner.hide();
+            setLocationErr(err);
+        }
+        navigator.geolocation.getCurrentPosition(success, error, { timeout: 3000 });
+    }
+
+    
+    // initialize the google place autocomplete
+    const initPlaceAPI = () => {
+        if (window.google && window.google.maps) {
+            let autocomplete = new window.google.maps.places.Autocomplete(setHomeAddressRefs.current, GLOBAL_CONSTANTS.DATA.GOOGLE_SEARCH_OPTION);
+            new window.google.maps.event.addListener(autocomplete, "place_changed", function () {
+                let place = autocomplete.getPlace();
+                setIsSetHomeAddress({
+                    info: place,
+                    lat: place?.geometry?.location?.lat() ? Number(place?.geometry?.location?.lat()) : "",
+                    lng: place?.geometry?.location?.lng() ? Number(place?.geometry?.location?.lng()) : ""
+                });
+                getMyLocation({ lat: place?.geometry?.location?.lat() ? Number(place?.geometry?.location?.lat()) : "", lng: place?.geometry?.location?.lng() ? Number(place?.geometry?.location?.lng()) : "" })
+
+            });
+        }
+    };
+
+    const getMyLocation = ({ lat = '', lng = '' }) => {
+        function callbackFn(resp) {
+            // if(resp.addresses[0].country === "United States"){
+                spinner.hide();
+                setIsSetHomeAddress({ "lat": Number(lat), "lng": Number(lng), "info": resp.addresses[0] });
+                setHomeAddressRefs.current.value = resp.addresses[0].address.freeformAddress
+                    ? resp.addresses[0].address.freeformAddress
+                    : resp.addresses[0].address.streetName + ", " + resp.addresses[0].address.municipality + ", " + resp.addresses[0].address.postalCode
+                    setMyProfile({...myProfile, "apartmentNumber": resp.addresses[0].address.streetNameAndNumber,
+                    "streetAddress": resp.addresses[0].address.municipalitySubdivision,
+                    // "streetAddress2": resp.addresses[0].address.municipalitySubdivision,
+                    "zipcode": resp.addresses[0].address.postalCode,
+                    "city": resp.addresses[0].address.countrySecondarySubdivision,
+                    "state": resp.addresses[0].address.countrySubdivision})
+            // }else{
+            //     Toast.warning({message: "Sorry! Services available for only US.", time: 4000});
+            // }
+            
+        }
+        services.reverseGeocode({
+            key: MAP_API_KEY,
+            position: { "lat": Number(lat), "lng": Number(lng) }
+        }).then(callbackFn);
+    }
     /**
      * set profile info
      * @param {*} profile 
@@ -305,33 +384,33 @@ const MyProfile = () => {
      * @param {string} value - This city & state of value
      * @param {Function} setFieldValue - This is set the value of state and city.
      */
-    const getCountry = (key, value, setFieldValue) => {
-        try {
-            if (value.length == 5) {
-                ApiService.getLocationByPin({
-                    key: MAP_API_KEY,
-                    zipCode: value
-                }).then(res => {
-                    if (res.data.results.length > 0) {
-                        getAddress1(value, 'AIzaSyAib2qoOvefizmKImyPPvuoQd7sS3ZVTFU', (err, CityList) => {
-                            setFieldValue("city", CityList.city.long);
-                            setFieldValue("state", CityList.state.long);
-                            setIsLatitude(CityList.location.lat);
-                            setIsLongitude(CityList.location.lng);
-                        });
-                        setFieldValue(key, value);
+    // const getCountry = (key, value, setFieldValue) => {
+    //     try {
+    //         if (value.length == 5) {
+    //             ApiService.getLocationByPin({
+    //                 key: MAP_API_KEY,
+    //                 zipCode: value
+    //             }).then(res => {
+    //                 if (res.data.results.length > 0) {
+    //                     getAddress1(value, 'AIzaSyAib2qoOvefizmKImyPPvuoQd7sS3ZVTFU', (err, CityList) => {
+    //                         setFieldValue("city", CityList.city.long);
+    //                         setFieldValue("state", CityList.state.long);
+    //                         setIsLatitude(CityList.location.lat);
+    //                         setIsLongitude(CityList.location.lng);
+    //                     });
+    //                     setFieldValue(key, value);
 
-                        setErr(false)
-                    } else {
-                        setErr(true)
-                    }
+    //                     setErr(false)
+    //                 } else {
+    //                     setErr(true)
+    //                 }
 
-                });
-            }
-        } catch (err) {
-            console.error(err);
-        }
-    }
+    //             });
+    //         }
+    //     } catch (err) {
+    //         console.error(err);
+    //     }
+    // }
 
     const onChangeTrim = (key, value, setFieldValue) => {
         try {
@@ -344,8 +423,9 @@ const MyProfile = () => {
 
     // init component
     useEffect(() => {
-        getCountry();
-    }, []);
+        // getCountry();
+        initPlaceAPI(); // init google autocomplete search map
+    }, [isHomeAddress]);
 
     return <>
         <h2 className="card-title-header">My Profile</h2>
@@ -443,7 +523,7 @@ const MyProfile = () => {
                                     </Form.Group>
                                 </div>
                             </div>
-                            <Form.Label class="p-0"><h5 class="label-head mb-0">Date of Birth<sup>*</sup></h5></Form.Label>
+                            {/* <Form.Label class="p-0"><h5 class="label-head mb-0">Date of Birth<sup>*</sup></h5></Form.Label>
                             <div className="row date-of-birth">
                                 <div className="col-lg-6 col-12">
                                     <Form.Group>
@@ -470,7 +550,7 @@ const MyProfile = () => {
                                     </Form.Group>
                                 </div>
 
-                            </div>
+                            </div> */}
                             <div className="row">
                                 <div className="col-lg-12">
                                     <div className="form-group">
@@ -480,7 +560,37 @@ const MyProfile = () => {
                                     </div>
                                 </div>
                             </div>
+                            <div className="row">
+                                        <div className="col-lg-12">
+                                            <Form.Group>
+                                                <Form.Label className="px-0"><h5 className="label-head">Search by Location or Zipcode</h5></Form.Label>
+                                                <input
+                                                    type="text"
+                                                    name="apartmentNumber"
+                                                    ref={setHomeAddressRefs}
+                                                    id="setHomeAddressID"
+                                                    onChange={(e) => {
+                                                        setIsHomeAddress(e.target.value)
+                                                    }}
+                                                    className={classNames("form-control", { "in-valid": errors.apartmentNumber })}
+                                                    placeholder={"Search your address..."}
+                                                    onBlur={handleChange}
+                                                    isInvalid={!!errors.apartmentNumber}
+                                                />
+                                                {
+                                                    <Form.Control.Feedback type="invalid text-danger f12 ">
+                                                        {errors.apartmentNumber}
+                                                    </Form.Control.Feedback>}
 
+                                                <div className="use-current-location mt5 aic" onClick={() => geoFindMe(setFieldValue)}>
+                                                    <ICN_GEO_LOCATION />
+                                                    <span className="ml5">Use current location</span>
+                                                    {/* PERMISSION_DENIED = 1, POSITION_UNAVAILABLE = 2, TIMEOUT = 3 */}
+                                                    {locationErr && locationErr?.code && <span className="text-danger f10 ml10">{`(${locationErr?.code === 1 ? "You have not allowed your browser's location access. Please provide the permission to access your location." : "Position unavailable"})`}</span>}
+                                                </div>
+                                            </Form.Group>
+                                        </div>
+                                    </div>
                             <div className="row">
                                 <div className="col-lg-12 mt-4">
                                     <h4 className="mb-4">Address</h4>
@@ -533,18 +643,18 @@ const MyProfile = () => {
                                             onChange={(e) => {
                                                         let a = e.target.value;
                                                         let tempA = a.substring(0,5);
-                                                        getCountry("zipcode", tempA, setFieldValue);
-                                                        setFieldValue("zipcode", tempA);
+                                                        // getCountry("zipcode", tempA, setFieldValue);
+                                                        // setFieldValue("zipcode", tempA);
                                             }}
                                             
-                                            isInvalid={!!errors.zipcode}
+                                            // isInvalid={!!errors.zipcode}
                                         />
-                                        {
+                                        {/* {
                                         err && <div className="text-danger">Please enter valid zip code.</div> ||
                                         <div className="text-danger">
                                             {errors.zipcode}
                                         </div>
-                                        }
+                                        } */}
                                         
                                     </Form.Group>
                                 </div>
@@ -592,7 +702,8 @@ const MyProfile = () => {
                                     <ul className="profile-btnList">
                                         {/* <li><button type="button" className="submt-btn submt-btn-lignt" onClick={() => resetForm()}>Cancel</button></li> */}
                                         <li onClick={() => { history.replace("/") }}><a class="submt-btn submt-btn-lignt mr10 pointer">Cancel</a></li>
-                                        <li><button type="submit" className="submt-btn submt-btn-dark" disabled={!isValid || err || isSubmitting || !dirty} onClick={handleSubmit}>Save</button></li>
+                                        {/* <li><button type="submit" className="submt-btn submt-btn-dark" disabled={!isValid || err || isSubmitting || !dirty} onClick={handleSubmit}>Save</button></li> */}
+                                        <li><button type="submit" className="submt-btn submt-btn-dark" onClick={handleSubmit}>Save</button></li>
                                     </ul>
                                 </div>
                             </div>

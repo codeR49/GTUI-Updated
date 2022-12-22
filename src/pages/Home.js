@@ -12,7 +12,7 @@ import useToast from '../commons/ToastHook';
 import HomeAddressSettings from '../components/Profile/HomeAddressSettings';
 import { useConfirmationModal } from '../commons/ConfirmationModal/ConfirmationModalHook';
 import { useHistory } from 'react-router-dom';
-
+import "../components/Shared/header.css";
 const Home = () => {
     const { setGunModel, setManufacturer } = useContext(AppContext);
     const spinner = useContext(Spinner);
@@ -23,6 +23,7 @@ const Home = () => {
     const dispatch = useAuthDispatch();
     const Toast = useToast();
     const history = useHistory();
+    const [locationModel, setLocationModel] = useState(true);
 
     // populate gun model
     const getModel = async () => {
@@ -95,48 +96,109 @@ const Home = () => {
     // init component
     useEffect(() => {
         getModel()
-        getManufacturer()
+        getManufacturer();
+        {
+            setTimeout(() => {
+                setLocationModel(false);
+            }, 10000)
+        }
     }, [])
 
-    return (
-        <Layout title="Home" description="This is the Home page" >
-            <div>
-                <ProductBanner />
-            </div>
-            <div>
-                <BuySellNav />
-            </div>
-            <div>
-                <ProductsList view="New Arrivals" />
-            </div>
-            <div>
-                <ProductsList view="Most Popular" />
-            </div>
-            {
-                !userDetails?.user?.sid
-                && !_.isEmpty(location?.position)
-                && <div>
-                    <ProductsList view="Mostly Viewed" />
-                </div>
-            }
-            {
-                userDetails?.user?.sid
-                && <div>
-                    <ProductsList view="Recently Viewed" />
-                </div>
-            }
+    const Modal = ({ show, children }) => {
+        const showHideClassName = show ? "modal d-block" : "modal d-none";
 
-            {
-                isDisplay
-                && <HomeAddressSettings
-                    {...{
-                        show: isDisplay,
-                        setShow: setIsDisplay
-                    }}
-                />
+        return (
+            <div className={showHideClassName}>
+                <div className='cd-signin-modal__container location'>
+                    <div className='row'>
+                        <div className='col-lg-12 changeLocation-popup-box'>
+                            <div className="js-signin-modal-block border-radius" >
+                                {children}
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    return (
+        <>
+            {locationModel ?
+
+                <Modal show={locationModel} >
+
+                    {/* <div className="form-group " >
+                        <label>Please allow location for better experience</label>
+                    </div> */}
+                    <div class="changeLocation-head"><h2>Please allow location for better experience</h2></div>
+                </Modal> :
+                <Layout title="Home" description="This is the Home page" >
+                    <div>
+                        <ProductBanner />
+                    </div>
+                    <div>
+                        <BuySellNav />
+                    </div>
+                    <div>
+                        <ProductsList view="New Arrivals" />
+                    </div>
+                    <div>
+                        <ProductsList view="Most Popular" />
+                    </div>
+                    {
+                        !userDetails?.user?.sid
+                        && !_.isEmpty(location?.position)
+                        && <div>
+                            <ProductsList view="Mostly Viewed" />
+                        </div>
+                    }
+                    {
+                        userDetails?.user?.sid
+                        && <div>
+                            <ProductsList view="Recently Viewed" />
+                        </div>
+                    }
+
+                    {
+                        isDisplay
+                        && <HomeAddressSettings
+                            {...{
+                                show: isDisplay,
+                                setShow: setIsDisplay
+                            }}
+                        />
+                    }
+                    {ConfirmationComponent}
+
+
+                    {/* <button onClick={() => setLocationModel(true)}>Hello</button> */}
+                    {/* <Modal show={locationModel} handleClose={() => setLocationModel(false)}>
+
+                <div className="form-group">
+                    <label>Enter Name:</label>
+                    <input
+                        type="text"
+                        
+                        name="modalInputName"
+                        
+                        className="form-control"
+                    />
+                </div>
+                <div className="form-group">
+                    <button type="button">
+                        Save
+                    </button>
+                </div>
+            </Modal> */}
+
+
+                </Layout>
             }
-            {ConfirmationComponent}
-        </Layout>
+        </>
+
+
     );
 }
 

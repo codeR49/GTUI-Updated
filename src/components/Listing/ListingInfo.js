@@ -645,8 +645,8 @@ const ListingInfo = ({
 
     const updateListOptions = (values) => {
         if (values.trade && values.tradeWith === 'specific') {
-            values.sell = false;
-            values.auction = false;
+            // values.sell = false;
+            // values.auction = false;
         }
         if (values.trade && values.tradeWith === 'open') {
             setSelectedSpecificListing({});
@@ -1464,7 +1464,7 @@ const ListingInfo = ({
                                         {/* sell / instant buy */}
                                         <div className="form-group instant-buy">
                                             <Form.Group id="tradeSellAuction" className="">
-                                                <Form.Check id="instant-buy-check" onChange={handleChange} onBlur={handleBlur} checked={values.sell} disabled={values.tradeWith === 'specific'} type="checkbox" name="sell" label="Instant Buy" />
+                                                <Form.Check id="instant-buy-check" onChange={handleChange} onBlur={handleBlur} checked={values.sell} type="checkbox" name="sell" label="Instant Buy" />
                                             </Form.Group>
                                             {
                                                 values.sell &&
@@ -1629,7 +1629,7 @@ const ListingInfo = ({
                                                                 }
                                                             </div>
                                                         }
-                                                        {values.tradeWith === 'specific' && <p className="fild-caption mt-3 mb-2" style={{ color: "#6c757d" , fontSize:"13px"}}>Note: When you want to trade this with a specific item, you will not be able to instantly sell or auction this item, You can only trade</p>}
+                                                        {values.tradeWith === 'specific' && <p className="fild-caption mt-3 mb-2" style={{ color: "#6c757d" , fontSize:"13px"}}>Note: When you want to trade this with a specific item, You can instantly sell or auction this item</p>}
                                                     </div>
                                                 </>
                                             }

@@ -268,6 +268,7 @@ const LoginPage = ({ setModalTab, setLoginModel, mailVerifyStatus }) => {
             && <div class="alert alert-success mt20" role="alert">
                     <p>Your signup was successful! Welcome to Guntraderz <br></br>
                     Before you login, please check your registered email to verify your account.</p>
+                    <p><a href={mailVerifyStatus.emailVerificationLink}>Verify Email</a></p>
             </div>
         }
 		<Formik
