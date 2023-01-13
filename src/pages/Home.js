@@ -100,7 +100,7 @@ const Home = () => {
         {
             setTimeout(() => {
                 setLocationModel(false);
-            }, 10000)
+            }, 2000)
         }
     }, [])
 
@@ -128,10 +128,7 @@ const Home = () => {
             {locationModel ?
 
                 <Modal show={locationModel} >
-
-                    {/* <div className="form-group " >
-                        <label>Please allow location for better experience</label>
-                    </div> */}
+                    
                     <div class="changeLocation-head"><h2>Please allow location for better experience</h2></div>
                 </Modal> :
                 <Layout title="Home" description="This is the Home page" >
@@ -171,29 +168,6 @@ const Home = () => {
                         />
                     }
                     {ConfirmationComponent}
-
-
-                    {/* <button onClick={() => setLocationModel(true)}>Hello</button> */}
-                    {/* <Modal show={locationModel} handleClose={() => setLocationModel(false)}>
-
-                <div className="form-group">
-                    <label>Enter Name:</label>
-                    <input
-                        type="text"
-                        
-                        name="modalInputName"
-                        
-                        className="form-control"
-                    />
-                </div>
-                <div className="form-group">
-                    <button type="button">
-                        Save
-                    </button>
-                </div>
-            </Modal> */}
-
-
                 </Layout>
             }
         </>

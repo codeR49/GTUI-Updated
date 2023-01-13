@@ -159,7 +159,8 @@ const MyProfile = () => {
                     "streetAddress": resp.addresses[0].address.municipalitySubdivision,
                     // "streetAddress2": resp.addresses[0].address.municipalitySubdivision,
                     "zipcode": resp.addresses[0].address.postalCode,
-                    "city": resp.addresses[0].address.countrySecondarySubdivision,
+                    "city": resp.addresses[0].address.municipality,
+                    // "city": resp.addresses[0].address.countrySecondarySubdivision,
                     "state": resp.addresses[0].address.countrySubdivision})
             // }else{
             //     Toast.warning({message: "Sorry! Services available for only US.", time: 4000});

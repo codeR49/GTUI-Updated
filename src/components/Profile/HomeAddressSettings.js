@@ -126,7 +126,8 @@ const HomeAddressSettings = ({ show, setShow, hideCloseIcon = true }) => {
                     "streetAddress1": resp.addresses[0].address.streetNameAndNumber,
                     "streetAddress2": resp.addresses[0].address.municipalitySubdivision,
                     "zipcode": resp.addresses[0].address.postalCode,
-                    "city": resp.addresses[0].address.countrySecondarySubdivision,
+                    "city": resp.addresses[0].address.municipality,
+                    // "city": resp.addresses[0].address.countrySecondarySubdivision,
                     "state": resp.addresses[0].address.countrySubdivision,
                 });
             // }else{
@@ -286,7 +287,7 @@ const HomeAddressSettings = ({ show, setShow, hideCloseIcon = true }) => {
                                                     type="text"
                                                     name="streetAddress1"
                                                     placeholder="Address Line 1"
-                                                    disabled
+                                                    
                                                     value={values.streetAddress1}
                                                     onChange={handleChange}
                                                 />
@@ -304,7 +305,7 @@ const HomeAddressSettings = ({ show, setShow, hideCloseIcon = true }) => {
                                                     type="text"
                                                     name="streetAddress2"
                                                     placeholder="Address Line 2"
-                                                    disabled
+                                                    
                                                     value={values.streetAddress2}
                                                     onChange={handleChange}
                                                 />
@@ -323,7 +324,7 @@ const HomeAddressSettings = ({ show, setShow, hideCloseIcon = true }) => {
                                                     name="zipcode"
                                                     placeholder="Zipcode"
                                                     value={values.zipcode}
-                                                    disabled
+                                                    
                                                     //onBlur={(e) => getCountry("zipcode", e.target.value, setFieldValue)}
                                                     onChange={handleChange}
                                                     isInvalid={!!errors.zipcode}
@@ -343,7 +344,7 @@ const HomeAddressSettings = ({ show, setShow, hideCloseIcon = true }) => {
                                                 <Form.Control
                                                     type="text"
                                                     name="city"
-                                                    disabled
+                                                    
                                                     placeholder="City"
                                                     value={values.city}
                                                     onChange={handleChange}
@@ -363,7 +364,7 @@ const HomeAddressSettings = ({ show, setShow, hideCloseIcon = true }) => {
                                                     type="text"
                                                     name="state"
                                                     placeholder="state"
-                                                    disabled
+                                                    
                                                     value={values.state}
                                                     onChange={handleChange}
                                                     isInvalid={!!errors.state}

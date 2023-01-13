@@ -397,8 +397,8 @@ const ApiService =  {
   isOfferedForTrade(payload) {
     return AxiosService.post("/mp/v1/toggle/listings", payload);
   },
-  uploadCreateListing(appUserSid,fllSid,payload,header){
-    return AxiosService.post("/mp/v1/upload/listings/"+ appUserSid + "/" + fllSid,payload,'',header)
+  uploadBulkCreateListing(appUserSid,latitude,longitude,listLocation,payload){
+    return AxiosService.post(`/mp/v1/create-bulk-listing/${appUserSid}?latitude=${latitude}&listing-location=%7B${listLocation}%7D&longitude=${longitude}`,payload)
   },
   getAllUser(){
     return AxiosService.get("/am/v1/find/all/users")

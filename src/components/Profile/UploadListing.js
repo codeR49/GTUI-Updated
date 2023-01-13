@@ -24,16 +24,15 @@ function UploadListing({ setShowUpload, storeId,getListing }) {
     })
 
 
-    const uploadCreateListing = (e)=> {
+    const uploadBulkCreateListing = (e)=> {
         try{
-        let header = {
-            "lat": location.position?.lat,
-            "longi": location.position?.lon || location.position?.lng
-        }
+        const latitude = location.position.lat;
+        const longitude = location.position.lon;
+        const listLocation= "123";
         let formData = new FormData();
         formData.append('file', e);
         spinner.show("Please wait...");
-        ApiService.uploadCreateListing(userDetails.user.sid, storeId, formData, header).then(
+        ApiService.uploadBulkCreateListing(userDetails.user.sid, latitude, longitude, listLocation, formData).then(
             response => {
                 setShowUpload(false)
                 spinner.hide();
@@ -51,7 +50,7 @@ function UploadListing({ setShowUpload, storeId,getListing }) {
             spinner.hide();
         });
     }catch(err){
-        console.error("error occur on uploadCreateListing()",err)
+        console.error("error occur on uploadBulkCreateListing()",err)
     }
         // Send formData object
     }
@@ -59,7 +58,6 @@ function UploadListing({ setShowUpload, storeId,getListing }) {
     const initImageUpload = () => {
         $('.upload-inputs:visible').trigger('click');
     }
-
     return (
         <>
             <div className="cd-signin-modal js-signin-modal">
@@ -86,11 +84,11 @@ function UploadListing({ setShowUpload, storeId,getListing }) {
                                                 </ul>
                                                 <p className="fild-caption text-center  label-head">{values.fileData?.name}</p>
 
-                                                <p class="fild-caption  pt-3 label-head"> <a className="underline" href="https://s3.ap-south-1.amazonaws.com/eserve-alchemy-dev/1619944978648-listing_details.csv">Download Sample CSV</a></p>
-                                                <input type="file" multiple accept=".csv" className="form-control upload-inputs" onChange={(e)=> setFieldValue("fileData",e.target.files[0]) } />
+                                                <p class="fild-caption  pt-3 label-head"> <a className="underline" href="https://course-content-storage.s3.amazonaws.com/Template.xlsx">Download Upload Sample</a></p>
+                                                <input type="file" multiple accept=".xlsx" className="form-control upload-inputs" onChange={(e)=> setFieldValue("fileData",e.target.files[0]) } />
                                                 
                                                 <p className="fild-caption   label-head">Download the above sample csv file to fill the information and upload the file</p>
-                                                <input type="button" name="next" disabled={!values.fileData} className="next action-button nextBtn full-w mx-0" value="Create Listing" onClick={()=> uploadCreateListing(values.fileData)}/>
+                                                <input type="button" name="next" disabled={!values.fileData} className="next action-button nextBtn full-w mx-0" value="Create Listing" onClick={()=> uploadBulkCreateListing(values.fileData)}/>
                                             </form>)
                                         }
                                     </Formik>
