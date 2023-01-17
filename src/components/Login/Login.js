@@ -17,10 +17,13 @@ import { services } from '@tomtom-international/web-sdk-services';
 import useToast from '../../commons/ToastHook';
 import { useHistory } from 'react-router-dom';
 import RequestVerificationLink from '../RequestVerificationLink/RequestVerificationLink';
-
+import Cookies from 'universal-cookie';
 const Login = ({ setLoginModel }) => {
 	const [modalTab, setModalTab] = useState("login");
     const [mailVerifyStatus, setMailVerifyStatus] = useState();
+
+
+   
 
     const verificationStatus = (data) => {
         setMailVerifyStatus(data);
@@ -78,7 +81,7 @@ const LoginPage = ({ setModalTab, setLoginModel, mailVerifyStatus }) => {
     const [hasInvalidCredential, setHasInvalidCredential] = useState(false)
     const [errorMessage,setErrorMessage] = useState('');
     const [isNotVerifiedEmail, setIsNotVerifiedEmail] = useState(false);
-
+    const cookies = new Cookies();
     /**
     * show the password as text when clicking eye icon 
     * @param {String} id - input field id
@@ -119,6 +122,11 @@ const LoginPage = ({ setModalTab, setLoginModel, mailVerifyStatus }) => {
                 spinner.show("Please wait...");
                 ApiService.login(values).then(
                     response => {
+                        cookies.set('myCat', 'Pacman');
+                        let token ='eyJhbGciOiJIUzI1NiJ9.eyJpZCI6IjEyMzQ1NiIsInVzZXJuYW1lIjoidGVzdGluZ2YifQ.63YYdlhaxmOEXIFICbPRmGg-RobByODOAEk2j0CMIy4'
+                        cookies.set('token', token, {domain:'.toolgrazp.net'});
+
+
                         dispatch({ type: 'LOGIN_SUCCESS', payload: {...response.data, "defaultPlatformVariables": response.data?.defaultPlatformVariables ? JSON.parse(response.data.defaultPlatformVariables) : null} });
                         setLoginModel(false);
                         if(response?.data?.appUserType === "SUPERADMIN") history.replace("/platform-dashboard/request");

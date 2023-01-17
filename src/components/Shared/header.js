@@ -511,6 +511,9 @@ const Header = () => {
 								<li class="nav-item" onClick={() => initBuySell('/getservice')}>
 									<a class="nav-link cp nav-text-color">Get Service</a>
 								</li>
+								<li  class="nav-item">
+								<a href="https://forum.toolgrazp.net" target="_blank" class="nav-link cp nav-text-color">Forum</a>
+								</li>
 
 								{userDetails.user && (userDetails.user.appUserType === "INDIVIDUAL" && !userDetails.user.adminToFFlStore) && <li class="nav-item">
 									<Link
