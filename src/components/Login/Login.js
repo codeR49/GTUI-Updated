@@ -123,7 +123,7 @@ const LoginPage = ({ setModalTab, setLoginModel, mailVerifyStatus }) => {
                 ApiService.login(values).then(
                     response => {
                         cookies.set('myCat', 'Pacman');
-                        let token ='eyJhbGciOiJIUzI1NiJ9.eyJpZCI6IjEyMzQ1NiIsInVzZXJuYW1lIjoidGVzdGluZ2YifQ.63YYdlhaxmOEXIFICbPRmGg-RobByODOAEk2j0CMIy4'
+                        let token ='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjkwOTAiLCJ1c2VybmFtZSI6ImthbWFsIn0.J3sTHvQ5gWultAlK5ia0FGzRc-Hyo7P0e6s4-K5gahk'
                         cookies.set('token', token, {domain:'.toolgrazp.net'});
 
 
