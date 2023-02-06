@@ -7,6 +7,7 @@ import ApiService from '../../../services/api.service';
 import { useAuthState, useAuthDispatch } from '../../../contexts/AuthContext';
 import useToast from '../../../commons/ToastHook';          
 import '../platform.css'
+import Cookies from 'universal-cookie';
 
 const PlatFormHeader = () => {
     const history = useHistory();
@@ -22,9 +23,13 @@ const PlatFormHeader = () => {
         spinner.show("Please wait... Logging out...");
         ApiService.logout(userDetails.user.sid).then(
             response => {
+                
+                
                 dispatch({ type: 'LOGOUT' });
                 history.push('/');
                 spinner.hide();
+                const cookies = new Cookies();
+                cookies.remove('token',{domain:'.toolgrazp.net'});
                 Toast.success({ message: 'You have been successfully logged out', time: 2000});
             },
             err => {

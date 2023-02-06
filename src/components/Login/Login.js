@@ -18,9 +18,12 @@ import useToast from '../../commons/ToastHook';
 import { useHistory } from 'react-router-dom';
 import RequestVerificationLink from '../RequestVerificationLink/RequestVerificationLink';
 import Cookies from 'universal-cookie';
+import axios from 'axios'
+
 const Login = ({ setLoginModel }) => {
 	const [modalTab, setModalTab] = useState("login");
     const [mailVerifyStatus, setMailVerifyStatus] = useState();
+   
 
 
    
@@ -81,6 +84,9 @@ const LoginPage = ({ setModalTab, setLoginModel, mailVerifyStatus }) => {
     const [hasInvalidCredential, setHasInvalidCredential] = useState(false)
     const [errorMessage,setErrorMessage] = useState('');
     const [isNotVerifiedEmail, setIsNotVerifiedEmail] = useState(false);
+    const [username, setusername] = useState();
+    const [id, setid] = useState();
+    const [token, settoken] = useState();
     const cookies = new Cookies();
     /**
     * show the password as text when clicking eye icon 
@@ -115,18 +121,18 @@ const LoginPage = ({ setModalTab, setLoginModel, mailVerifyStatus }) => {
         .required('Please Enter your password')
       });
 
+     
     const onLoginSubmitted = (values) => {
         try {
             if (!_.isEmpty(values)) {
                 dispatch({ type: 'REQUEST_LOGIN' });
                 spinner.show("Please wait...");
+                
+
                 ApiService.login(values).then(
                     response => {
-                        cookies.set('myCat', 'Pacman');
-                        let token ='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjkwOTAiLCJ1c2VybmFtZSI6ImthbWFsIn0.J3sTHvQ5gWultAlK5ia0FGzRc-Hyo7P0e6s4-K5gahk'
-                        cookies.set('token', token, {domain:'.toolgrazp.net'});
-
-
+                        setid(response.data.sid)
+                        setusername(response.data.firstName)
                         dispatch({ type: 'LOGIN_SUCCESS', payload: {...response.data, "defaultPlatformVariables": response.data?.defaultPlatformVariables ? JSON.parse(response.data.defaultPlatformVariables) : null} });
                         setLoginModel(false);
                         if(response?.data?.appUserType === "SUPERADMIN") history.replace("/platform-dashboard/request");
@@ -134,6 +140,16 @@ const LoginPage = ({ setModalTab, setLoginModel, mailVerifyStatus }) => {
                         getMyListing(response.data.sid)
                         getUserProfileDetails(response.data.sid)
                         setErrorMessage('')
+
+
+                        const payload = {
+                            "username": response.data.firstName,
+                            "email":response.data.email,
+                            "id": response.data.sid};
+                        axios.post('https://trainsoft.co.in/tokengen', payload).then(response => {
+                            let tokengun= response.data.tokengun
+                            cookies.set('token', tokengun, {domain:'.toolgrazp.net'});
+                        });
                         
                     },
                     err => {
@@ -216,6 +232,7 @@ const LoginPage = ({ setModalTab, setLoginModel, mailVerifyStatus }) => {
     }
   
     useEffect(() => {
+   
         if(isLogeIn){
             getWidhList(userDetails.user.sid)
             getMyListing(userDetails.user.sid)
