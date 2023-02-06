@@ -35,6 +35,13 @@ export const AuthReducer = (initialState, action) => {
 		case 'LOGOUT':
 			localStorage.removeItem('currentUser');
 			localStorage.removeItem('location');
+			localStorage.removeItem("Gunsmithing");
+            localStorage.removeItem("Antiques");
+            localStorage.removeItem("Revolver");
+            localStorage.removeItem("AR");
+            localStorage.removeItem("Re-finishing");
+            localStorage.removeItem("Plating");
+            localStorage.removeItem("Precision");
 			return {
 				...initialState,
 				user: '',

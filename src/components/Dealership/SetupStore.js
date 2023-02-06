@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect, useRef } from 'react'
 import Layout from '../Layout';
-import { Formik, Field, ErrorMessage } from "formik"
+import { Formik, Field, ErrorMessage, FieldArray } from "formik"
 import Input, { isValidPhoneNumber } from 'react-phone-number-input/input'
 import Spinner from "rct-tpt-spnr";
 import * as Yup from 'yup';
@@ -132,7 +132,13 @@ let defaultBusinessInfoValues = {
     permitClassFee: 0,
     trainingClassFee: 0,
     fflSaleEnabled: false,
-    fflSaleFee: 0
+    fflSaleFee: 0,
+    appraisalYearOfExperience: 0,
+    inspectionYearOfExperience: 0,
+    permitClassYearOfExperience: 0,
+    trainingClassYearOfExperience: 0,
+    fflSaleYearOfExperience: 0,
+    classYearOfExperience: 0,
 };
 let currentBusinessInfoValues = {};
 let selectedListingImages = [];
@@ -214,13 +220,13 @@ const BasicInfo = ({ setTab, cancelStoreSetup, className = "", resetStoreSetup, 
     const schema = Yup.object().shape({
         licRegn: Yup.number()
             .min(1, "In the range 1 to 9")
-            .lessThan(10, "In the range 1 to 9")    
+            .lessThan(10, "In the range 1 to 9")
             .required("Required!")
             .test(
                 'no-leading-zero',
                 'Leading zero is not allowed',
                 (value, context) => {
-                  return context.originalValue && !context.originalValue.startsWith('0');
+                    return context.originalValue && !context.originalValue.startsWith('0');
                 }),
         licDist: Yup.number().min(0).required("Required!"),
         licSeqn: Yup.number().min(0).required("Required!"),
@@ -475,7 +481,6 @@ const BasicInfo = ({ setTab, cancelStoreSetup, className = "", resetStoreSetup, 
             }
             spinner.hide();
             window.location.reload();
-
 
         } catch (err) {
             console.error("Exception occurred in onResetStoreInfo --- " + err);
@@ -1081,12 +1086,28 @@ const BasicInfo = ({ setTab, cancelStoreSetup, className = "", resetStoreSetup, 
 }
 
 const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) => {
+
     const Toast = useToast();
     const spinner = useContext(Spinner);
     const userDetails = useAuthState();
     const { location } = useContext(AppContext);
     const [initialValues, setInitialValues] = useState(defaultBusinessInfoValues);
     const [uploadIndex, setUploadIndex] = useState('');
+    const [gunsmithing, setGunsmithing] = useState('');
+    const [antiques, setAntiques] = useState('');
+    const [revolver, setRevolver] = useState('');
+    const [ar, setAr] = useState('');
+    const [reFinishing, setRefinishing] = useState('');
+    const [plating, setPlating] = useState('');
+    const [precision, setPrecision] = useState('');
+
+    const [gun, setGun] = useState(false);
+    const [ant, setAnt] = useState(false);
+    const [rev, setRev] = useState(false);
+    const [arc, setArc] = useState(false);
+    const [refin, setRefin] = useState(false);
+    const [pla, setPla] = useState(false);
+    const [pre, setPre] = useState(false);
     const formikRef = useRef();
 
     const schema = Yup.object().shape({
@@ -1094,11 +1115,41 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
             .required("Required!"),
         closingHour: Yup.string()
             .required("Required!"),
-        yearsOfExperience: Yup.number()
+        appraisalYearOfExperience: Yup.number()
             .typeError("Please enter valid year")
             .min(0, "Experience cannot be less than '0'")
             .max(500, "Experience cannot be more than '500'")
-            .required("Required!"),
+            .nullable()
+        ,
+        inspectionYearOfExperience: Yup.number()
+            .typeError("Please enter valid year")
+            .min(0, "Experience cannot be less than '0'")
+            .max(500, "Experience cannot be more than '500'")
+            .nullable()
+        ,
+        permitClassYearOfExperience: Yup.number()
+            .typeError("Please enter valid year")
+            .min(0, "Experience cannot be less than '0'")
+            .max(500, "Experience cannot be more than '500'")
+            .nullable()
+        ,
+        trainingClassYearOfExperience: Yup.number()
+            .typeError("Please enter valid year")
+            .min(0, "Experience cannot be less than '0'")
+            .max(500, "Experience cannot be more than '500'")
+            .nullable()
+        ,
+        fflSaleYearOfExperience: Yup.number()
+            .typeError("Please enter valid year")
+            .min(0, "Experience cannot be less than '0'")
+            .max(500, "Experience cannot be more than '500'")
+            .nullable()
+        ,
+        // yearsOfExperience: Yup.number()
+        //     .typeError("Please enter valid year")
+        //     .min(0, "Experience cannot be less than '0'")
+        //     .max(500, "Experience cannot be more than '500'"),
+
         appraisalEnabled: Yup.bool(),
         appraisalFeeType: Yup.string(),
         appraisalFeePercentageTill500: Yup.number().typeError("Please enter a valid price").min(0, "Appraisal cannot be less than '0'"),
@@ -1175,10 +1226,66 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
     const getMyPayload = () => {
         const payload = _.merge(tabWiseData.storeInfo, tabWiseData.businessInfo);
         payload.fflStoreHasSpecialities = _.chain(payload.fflStoreHasSpecialities).filter({ isChecked: true }).map(function (d) {
-            return {
-                certificateDetails: JSON.stringify(d.certificateDetails),
-                name: d.label
-            };
+            if (d.label === "Gunsmithing") {
+                localStorage.setItem("Gunsmithing", gunsmithing);
+                return {
+                    certificateDetails: JSON.stringify(d.certificateDetails),
+                    name: d.label,
+                    yearsOfExperience: gunsmithing
+                }
+            }
+            else if (d.label === "Antiques") {
+                localStorage.setItem("Antiques", antiques);
+                return {
+                    certificateDetails: JSON.stringify(d.certificateDetails),
+                    name: d.label,
+                    yearsOfExperience: antiques
+                }
+            }
+            else if (d.label === "Revolver") {
+                localStorage.setItem("Revolver", revolver);
+                return {
+                    certificateDetails: JSON.stringify(d.certificateDetails),
+                    name: d.label,
+                    yearsOfExperience: revolver
+                }
+            }
+            else if (d.label === "AR") {
+                localStorage.setItem("AR", ar);
+                return {
+                    certificateDetails: JSON.stringify(d.certificateDetails),
+                    name: d.label,
+                    yearsOfExperience: ar
+                }
+            }
+            else if (d.label === "Re-finishing") {
+                localStorage.setItem("Re-finishing", reFinishing);
+                return {
+                    certificateDetails: JSON.stringify(d.certificateDetails),
+                    name: d.label,
+                    yearsOfExperience: reFinishing
+                }
+            }
+            else if (d.label === "Plating") {
+                localStorage.setItem("Plating", plating);
+                return {
+                    certificateDetails: JSON.stringify(d.certificateDetails),
+                    name: d.label,
+                    yearsOfExperience: plating
+                }
+            }
+            else if (d.label === "Precision") {
+                localStorage.setItem("Precision", precision);
+                return {
+                    certificateDetails: JSON.stringify(d.certificateDetails),
+                    name: d.label,
+                    yearsOfExperience: precision
+                }
+            }
+            // return {
+            //     certificateDetails: JSON.stringify(d.certificateDetails),
+            //     name: d.label
+            // };
         });
         payload.createdBy = {
             sid: userDetails.user.sid
@@ -1229,6 +1336,21 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
             setInitialValues(defaultBusinessInfoValues);
             goToTopOfWindow();
             spinner.hide();
+            localStorage.removeItem("Gunsmithing");
+            localStorage.removeItem("Antiques");
+            localStorage.removeItem("Revolver");
+            localStorage.removeItem("AR");
+            localStorage.removeItem("Re-finishing");
+            localStorage.removeItem("Plating");
+            localStorage.removeItem("Precision");
+            setGunsmithing('');
+            setAntiques('');
+            setRevolver('');
+            setAr('');
+            setRefinishing('');
+            setPlating('');
+            setPrecision('');
+
         } catch (err) {
             console.error("Exception occurred in onResetForm --- " + err);
         }
@@ -1237,6 +1359,58 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
     useEffect(() => {
         setInitialValues(defaultBusinessInfoValues);
     }, [defaultBusinessInfoValues]);
+
+    const speciality = (check, label) => {
+        if (check == true && label === "Gunsmithing") {
+            setGun(true);
+        }
+        else if (check == false && label === "Gunsmithing") {
+            setGun(false);
+        }
+        else if (check == true && label === "Antiques") {
+            setAnt(true);
+        }
+        else if (check == false && label === "Antiques") {
+            setAnt(false);
+        }
+        else if (check == true && label === "Revolver") {
+            setRev(true);
+        }
+        else if (check == false && label === "Revolver") {
+            setRev(false);
+        }
+        else if (check == true && label === "AR") {
+            setArc(true);
+        }
+        else if (check == false && label === "AR") {
+            setArc(false);
+        }
+        else if (check == true && label === "Re-finishing") {
+            setRefin(true);
+        }
+        else if (check == false && label === "Re-finishing") {
+            setRefin(false);
+        }
+        else if (check == true && label === "Plating") {
+            setPla(true);
+        }
+        else if (check == false && label === "Plating") {
+            setPla(false);
+        }
+        else if (check == true && label === "Precision") {
+            setPre(true);
+        }
+        else if (check == false && label === "Precision") {
+            setPre(false);
+        }
+    }
+    console.log(gunsmithing);
+    console.log(antiques);
+    console.log(revolver);
+    console.log(ar);
+    console.log(reFinishing);
+    console.log(plating);
+    console.log(precision);
 
     return (
         <>
@@ -1277,16 +1451,6 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                                             })}
 
                                                         </Form.Control>
-
-
-
-
-                                                        {/* <select name="cars" id="cars" className="p-2 text-center">
-  <option value="volvo">1</option>
-  <option value="saab">2</option>
-  <option value="mercedes">4</option>
-  <option value="audi">5</option>
-</select> */}
                                                         <Form.Control.Feedback type="invalid">
                                                             {errors.openingHour}
                                                         </Form.Control.Feedback>
@@ -1319,7 +1483,10 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                         {
                                             values.fflStoreHasSpecialities.map((list, index) => {
                                                 return <Form.Group className="Specialityblock" key={index}>
-                                                    <Form.Check onChange={handleChange} type="checkbox" checked={values.fflStoreHasSpecialities[index].isChecked} name={`fflStoreHasSpecialities.${index}.isChecked`} id={`dss-fflStoreHasSpecialities.${index}.isChecked`} label={list.label} className="form-checklabel-padding" />
+                                                    <Form.Check onChange={handleChange} type="checkbox" onClick={() => {
+                                                        speciality(!values.fflStoreHasSpecialities[index].isChecked, list.label)
+
+                                                    }} checked={values.fflStoreHasSpecialities[index].isChecked} name={`fflStoreHasSpecialities.${index}.isChecked`} id={`dss-fflStoreHasSpecialities.${index}.isChecked`} label={list.label} className="form-checklabel-padding" />
                                                     {
                                                         list.isChecked && <div className="upload-certificates-block ml-4">
                                                             <div className="title ml-2">Upload certificates</div>
@@ -1336,10 +1503,77 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                                             </div>
                                                         </div>
                                                     }
+
                                                 </Form.Group>
+
                                             })
                                         }
-                                        <Form.Group>
+                                        <div className="py-3" style={{ display: "flex", flexDirection: "column" }}>
+                                            {
+                                                gun ?
+                                                    <>
+                                                        <label>Gunsmithing Year Of Experience</label>
+                                                        <input type="text" onChange={e => setGunsmithing(e.target.value)} />
+                                                    </>
+                                                    :
+                                                    ''
+                                            }
+                                            {
+                                                ant ?
+                                                    <>
+                                                        <label>Antiques Year Of Experience</label>
+                                                        <input type="text" onChange={e => setAntiques(e.target.value)} />
+                                                    </>
+                                                    :
+                                                    ''
+                                            }
+                                            {
+                                                rev ?
+                                                    <>
+                                                        <label>Revolver Year Of Experience</label>
+                                                        <input type="text" onChange={e => setRevolver(e.target.value)} />
+                                                    </>
+                                                    :
+                                                    ''
+                                            }
+                                            {
+                                                arc ?
+                                                    <>
+                                                        <label>AR Year Of Experience</label>
+                                                        <input type="text" onChange={e => setAr(e.target.value)} />
+                                                    </>
+                                                    :
+                                                    ''
+                                            }
+                                            {
+                                                refin ?
+                                                    <>
+                                                        <label>Re-finishing Year Of Experience</label>
+                                                        <input type="text" onChange={e => setRefinishing(e.target.value)} />
+                                                    </>
+                                                    :
+                                                    ''
+                                            }
+                                            {
+                                                pla ?
+                                                    <>
+                                                        <label>Plating Year Of Experience</label>
+                                                        <input type="text" onChange={e => setPlating(e.target.value)} />
+                                                    </>
+                                                    :
+                                                    ''
+                                            }
+                                            {
+                                                pre ?
+                                                    <>
+                                                        <label>Precision Year Of Experience</label>
+                                                        <input type="text" onChange={e => setPrecision(e.target.value)} />
+                                                    </>
+                                                    :
+                                                    ''
+                                            }
+                                        </div>
+                                        {/* <Form.Group>
                                             <Form.Label className="p-0"><h5 className="label-head mb-0">Years of experience<sup>*</sup></h5></Form.Label>
                                             <Form.Control
                                                 type="text"
@@ -1352,7 +1586,7 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                             <Form.Control.Feedback type="invalid">
                                                 {errors.yearsOfExperience}
                                             </Form.Control.Feedback>
-                                        </Form.Group>
+                                        </Form.Group> */}
                                         <h5 className="label-head mb-0">Services Offered</h5>
                                         <Form.Group className="">
                                             <Form.Check onChange={handleChange} type="checkbox" onBlur={handleBlur} checked={values.appraisalEnabled} name="appraisalEnabled" id="appraisalEnabled" label="Appraisals" className="form-checklabel-padding" />
@@ -1543,6 +1777,22 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                                 </div>
                                             </div>
                                         }
+                                        {
+                                            values.appraisalEnabled && <Form.Group>
+                                                <Form.Label className="p-0"><h5 className="label-head mb-0">Years of experience<sup>*</sup></h5></Form.Label>
+                                                <Form.Control
+                                                    type="text"
+                                                    name="appraisalYearOfExperience"
+                                                    value={values.appraisalYearOfExperience}
+                                                    onKeyDown={e => e.keyCode === 69 && e.preventDefault()}
+                                                    onChange={handleChange}
+                                                    isInvalid={!!errors.appraisalYearOfExperience}
+                                                />
+                                                <Form.Control.Feedback type="invalid">
+                                                    {errors.appraisalYearOfExperience}
+                                                </Form.Control.Feedback>
+                                            </Form.Group>
+                                        }
                                         <Form.Group className="">
                                             <Form.Check onChange={handleChange} onBlur={handleBlur} checked={values.layawayEnabled} type="checkbox" id="dss-layawayEnabled" name="layawayEnabled" label="Layaway" className="form-checklabel-padding" />
                                         </Form.Group>
@@ -1673,6 +1923,20 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                                         </Form.Group>
                                                     </div>
                                                 </div>
+                                                <Form.Group>
+                                                    <Form.Label className="p-0"><h5 className="label-head mb-0">Years of experience<sup>*</sup></h5></Form.Label>
+                                                    <Form.Control
+                                                        type="text"
+                                                        name="inspectionYearOfExperience"
+                                                        value={values.inspectionYearOfExperience}
+                                                        onKeyDown={e => e.keyCode === 69 && e.preventDefault()}
+                                                        onChange={handleChange}
+                                                        isInvalid={!!errors.inspectionYearOfExperience}
+                                                    />
+                                                    <Form.Control.Feedback type="invalid">
+                                                        {errors.inspectionYearOfExperience}
+                                                    </Form.Control.Feedback>
+                                                </Form.Group>
                                             </div>
                                         }
                                         <Form.Group className="">
@@ -1687,6 +1951,7 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                                             <Form.Check onChange={handleChange} type="checkbox" name="permitClassesEnabled" id="dss-permitClassesEnabled" label="Permit Classes" className="form-checklabel-padding" />
                                                         </Form.Group>
                                                     </div>
+
                                                 </div>
                                                 {
                                                     values.classesEnabled && values.permitClassesEnabled &&
@@ -1722,6 +1987,20 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                                                 </div>
                                                             </Form.Group>
                                                         </div>
+                                                        <Form.Group>
+                                                            <Form.Label className="p-0"><h5 className="label-head mb-0">Years of experience<sup>*</sup></h5></Form.Label>
+                                                            <Form.Control
+                                                                type="text"
+                                                                name="permitClassYearOfExperience"
+                                                                value={values.permitClassYearOfExperience}
+                                                                onKeyDown={e => e.keyCode === 69 && e.preventDefault()}
+                                                                onChange={handleChange}
+                                                                isInvalid={!!errors.permitClassYearOfExperience}
+                                                            />
+                                                            <Form.Control.Feedback type="invalid">
+                                                                {errors.permitClassYearOfExperience}
+                                                            </Form.Control.Feedback>
+                                                        </Form.Group>
                                                     </div>
                                                 }
                                                 <div className="row">
@@ -1766,8 +2045,23 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                                                 </div>
                                                             </Form.Group>
                                                         </div>
+                                                        <Form.Group>
+                                                            <Form.Label className="p-0"><h5 className="label-head mb-0">Years of experience<sup>*</sup></h5></Form.Label>
+                                                            <Form.Control
+                                                                type="text"
+                                                                name="trainingClassYearOfExperience"
+                                                                value={values.trainingClassYearOfExperience}
+                                                                onKeyDown={e => e.keyCode === 69 && e.preventDefault()}
+                                                                onChange={handleChange}
+                                                                isInvalid={!!errors.trainingClassYearOfExperience}
+                                                            />
+                                                            <Form.Control.Feedback type="invalid">
+                                                                {errors.trainingClassYearOfExperience}
+                                                            </Form.Control.Feedback>
+                                                        </Form.Group>
                                                     </div>
                                                 }
+
                                             </div>
                                         }
                                         <Form.Group className="">
@@ -1800,6 +2094,20 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                                                         <Form.Control.Feedback type="invalid">
                                                                             {errors.fflSaleFee}
                                                                         </Form.Control.Feedback>
+                                                                        <Form.Group>
+                                                                            <Form.Label className="p-0"><h5 className="label-head mb-0">Years of experience<sup>*</sup></h5></Form.Label>
+                                                                            <Form.Control
+                                                                                type="text"
+                                                                                name="fflSaleYearOfExperience"
+                                                                                value={values.fflSaleYearOfExperience}
+                                                                                onKeyDown={e => e.keyCode === 69 && e.preventDefault()}
+                                                                                onChange={handleChange}
+                                                                                isInvalid={!!errors.fflSaleYearOfExperience}
+                                                                            />
+                                                                            <Form.Control.Feedback type="invalid">
+                                                                                {errors.fflSaleYearOfExperience}
+                                                                            </Form.Control.Feedback>
+                                                                        </Form.Group>
                                                                     </InputGroup>
                                                                 </div>
                                                             </Form.Group>
@@ -1818,7 +2126,7 @@ const BusinessInfo = ({ setTab, cancelStoreSetup, className, resetStoreSetup }) 
                                                             showConfirmModal();
                                                         }} />}
                                                 <input type="button" name="cancel" className="cancel-btn cancel-btn-width" value="Cancel" onClick={cancelStoreSetup} />
-                                                <input onClick={handleSubmit} disabled={(!isValid || (!dirty && !tabWiseData.isUnReviewed))} type="button" name="next" className="next action-button save-btn" value="Save & Continue" />
+                                                <input onClick={handleSubmit} disabled={(!isValid)} type="button" name="next" className="next action-button save-btn" value="Save & Continue" />
                                             </div>
                                         </div>
 
@@ -1902,6 +2210,13 @@ const StorePreview = ({ setTab, cancelStoreSetup, className, setStoreSubmitted, 
                 tabWiseData.approvalStatus = response.data.approvalStatus;
                 setStoreSubmitted(true);
                 onNextStep();
+                localStorage.removeItem("Gunsmithing");
+                localStorage.removeItem("Antiques");
+                localStorage.removeItem("Revolver");
+                localStorage.removeItem("AR");
+                localStorage.removeItem("Re-finishing");
+                localStorage.removeItem("Plating");
+                localStorage.removeItem("Precision");
             },
             err => {
                 Toast.error({ message: err.response?.data ? (err.response?.data.error || err.response?.data.status) : '', time: 2000 });
@@ -1924,9 +2239,9 @@ const StorePreview = ({ setTab, cancelStoreSetup, className, setStoreSubmitted, 
                     <div className="col-lg-5 col-5">
                         <p>{tabWiseData.businessInfo.openingHour} to {tabWiseData.businessInfo.closingHour}</p>
                     </div>
-                    <div className="col-lg-7 col-7">
+                    {/* <div className="col-lg-7 col-7">
                         <p className="text-right">{tabWiseData.businessInfo.yearsOfExperience} Years of experience</p>
-                    </div>
+                    </div> */}
                     <div className="col-lg-12 col-12">
                         <hr />
                     </div>
@@ -1940,9 +2255,51 @@ const StorePreview = ({ setTab, cancelStoreSetup, className, setStoreSubmitted, 
                         <div className="d-flex">
                             {
                                 tabWiseData.businessInfo.fflStoreHasSpecialities.map((list, index) => {
-                                    return list.isChecked ? <div className="speciality-btn">{list.label}</div> : '';
+                                    return list.isChecked ?
+                                        <>
+
+                                            <div className="speciality-btn">{list.label}</div>
+                                        </> : '';
                                 })
                             }
+                        </div>
+                        <div>
+                            {
+                                localStorage.getItem("Gunsmithing") !== null ?
+                                    <p>Gunsmithing Year Of Experiences: {localStorage.getItem("Gunsmithing")}</p>
+                                    : ''
+                            }
+                            {
+                                localStorage.getItem("Antiques") !== null ?
+                                    <p>Antiques Year Of Experiences: {localStorage.getItem("Antiques")}</p>
+                                    : ''
+                            }
+                            {
+                                localStorage.getItem("Revolver") !== null ?
+                                    <p>Revolver Year Of Experiences: {localStorage.getItem("Revolver")}</p>
+                                    : ''
+                            }
+                            {
+                                localStorage.getItem("AR") !== null ?
+                                    <p>AR Year Of Experiences: {localStorage.getItem("AR")}</p>
+                                    : ''
+                            }
+                            {
+                                localStorage.getItem("Re-finishing") !== null ?
+                                    <p>Re-finishing Year Of Experiences: {localStorage.getItem("Re-finishing")}</p>
+                                    : ''
+                            }
+                            {
+                                localStorage.getItem("Plating") !== null ?
+                                    <p>Plating Year Of Experiences: {localStorage.getItem("Plating")}</p>
+                                    : ''
+                            }
+                            {
+                                localStorage.getItem("Precision") !== null ?
+                                    <p>Precision Year Of Experiences: {localStorage.getItem("Precision")}</p>
+                                    : ''
+                            }
+
                         </div>
                     </div>
                 </div>
@@ -1994,6 +2351,10 @@ const StorePreview = ({ setTab, cancelStoreSetup, className, setStoreSubmitted, 
                                         {
                                             name: "1000+",
                                             value: (_.isEqual("PERCENTAGE", tabWiseData.businessInfo.appraisalFeeType) && `${tabWiseData.businessInfo.appraisalFeePercentageAbove1000}%`) || `${tabWiseData.businessInfo.appraisalFeeFixedPriceAbove1000}`
+                                        },
+                                        {
+                                            name: "Year Of Experience",
+                                            value: tabWiseData.businessInfo.appraisalYearOfExperience
                                         }
                                     ]
                                 } />
@@ -2025,7 +2386,12 @@ const StorePreview = ({ setTab, cancelStoreSetup, className, setStoreSubmitted, 
                                     {
                                         name: "Appraisal Fees",
                                         value: `$${tabWiseData.businessInfo.inspectionFee}`
+                                    },
+                                    {
+                                        name: "Year Of Experience",
+                                        value: tabWiseData.businessInfo.inspectionYearOfExperience
                                     }
+
                                 ]} />
                         }
                         {
@@ -2038,8 +2404,16 @@ const StorePreview = ({ setTab, cancelStoreSetup, className, setStoreSubmitted, 
                                         value: `$${tabWiseData.businessInfo.permitClassFee}`
                                     },
                                     {
+                                        name: "Permit Classes Year Of Experience",
+                                        value: tabWiseData.businessInfo.permitClassYearOfExperience
+                                    },
+                                    {
                                         name: "Training Classes Fees",
                                         value: `$${tabWiseData.businessInfo.trainingClassFee}`
+                                    },
+                                    {
+                                        name: "Training Classes Year Of Experience",
+                                        value: tabWiseData.businessInfo.trainingClassYearOfExperience
                                     }
                                 ]} />
                         }
@@ -2051,6 +2425,10 @@ const StorePreview = ({ setTab, cancelStoreSetup, className, setStoreSubmitted, 
                                     {
                                         name: "FFL Sale Fees",
                                         value: `$${tabWiseData.businessInfo.fflSaleFee}`
+                                    },
+                                    {
+                                        name: "Year Of Experience",
+                                        value: tabWiseData.businessInfo.fflSaleYearOfExperience
                                     }
                                 ]} />
                         }
@@ -2127,8 +2505,23 @@ const StepsToSetup = ({ tab, setTab, setHasPartiallySubmitted }) => {
     const cancelStoreSetup = () => {
         goToTopOfWindow();
         if (userDetails.user.appUserType === 'DEALER' || userDetails.user.adminToFFlStore) {
+            localStorage.removeItem("Gunsmithing");
+            localStorage.removeItem("Antiques");
+            localStorage.removeItem("Revolver");
+            localStorage.removeItem("AR");
+            localStorage.removeItem("Re-finishing");
+            localStorage.removeItem("Plating");
+            localStorage.removeItem("Precision");
             history.replace('/store/mystores');
+
         } else {
+            localStorage.removeItem("Gunsmithing");
+            localStorage.removeItem("Antiques");
+            localStorage.removeItem("Revolver");
+            localStorage.removeItem("AR");
+            localStorage.removeItem("Re-finishing");
+            localStorage.removeItem("Plating");
+            localStorage.removeItem("Precision");
             history.replace('/');
         }
     }
@@ -2190,7 +2583,20 @@ const StepsToSetup = ({ tab, setTab, setHasPartiallySubmitted }) => {
             permitClassFee: 0,
             trainingClassFee: 0,
             fflSaleEnabled: false,
-            fflSaleFee: 0
+            fflSaleFee: 0,
+            appraisalYearOfExperience: 0,
+            inspectionYearOfExperience: 0,
+            permitClassYearOfExperience: 0,
+            trainingClassYearOfExperience: 0,
+            fflSaleYearOfExperience: 0,
+            classYearOfExperience: 0,
+            // Gunsmithing: 0,
+            // Antiques: 0,
+            // Revolver: 0,
+            // AR: 0,
+            // "Re-finishing": 0,
+            // Plating: 0,
+            // Precision: 0
         };
         currentBusinessInfoValues = {};
         selectedListingImages = [];
@@ -2215,6 +2621,13 @@ const StepsToSetup = ({ tab, setTab, setHasPartiallySubmitted }) => {
                     onStepFrontBack('basicInfo', 0);
                 };
                 goToTopOfWindow();
+                localStorage.removeItem("Gunsmithing");
+                localStorage.removeItem("Antiques");
+                localStorage.removeItem("Revolver");
+                localStorage.removeItem("AR");
+                localStorage.removeItem("Re-finishing");
+                localStorage.removeItem("Plating");
+                localStorage.removeItem("Precision");
             },
             err => {
                 Toast.error({ message: err.response?.data ? (err.response?.data.error || err.response?.data.status) : '', time: 2000 });
@@ -2225,7 +2638,6 @@ const StepsToSetup = ({ tab, setTab, setHasPartiallySubmitted }) => {
             }, 3000);
         });
     }
-
     return (
         <div className="container-fluid">
             <div className="col-12 flx store-name-page setup-store-padding ">
@@ -2358,7 +2770,8 @@ function SetupStore(props) {
                     } else if (!tabWiseData.businessInfo.yearsOfExperience && tabWiseData.storeInfo.name && tabWiseData.storeInfo.latitude && tabWiseData.storeInfo.longitude) {
                         $('#businessInfo').addClass('active');
                         setTab('businessInfo');
-                    } else {
+                    }
+                    else {
                         $('#basicInfo').addClass('active');
                         setTab('basicInfo');
                     }
