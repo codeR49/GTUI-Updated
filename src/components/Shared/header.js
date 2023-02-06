@@ -24,6 +24,7 @@ import LogginButton from "./LogginButton";
 import UserLogginNav from "./UserLogginNav";
 import "./header.css";
 import { BasicModal } from "react-bootstrap-dynamic-modal";
+import Cookies from 'universal-cookie';
 
 const NOTIFICATION_TIMER = 1000 * 60;
 const Header = () => {
@@ -86,7 +87,7 @@ const Header = () => {
 			console.error("error occur on useOnClickOutside()");
 		}
 	});
-
+	
 	// user logout method
 	const userLogout = () => {
 		try {
@@ -96,6 +97,8 @@ const Header = () => {
 					clearCart();
 					dispatch({ type: "LOGOUT" });
 					history.push("/");
+					const cookies = new Cookies();
+					cookies.remove('token',{domain:'.toolgrazp.net'});
 					goToTopOfWindow();
 					spinner.hide();
 					Toast.success({
@@ -512,7 +515,7 @@ const Header = () => {
 									<a class="nav-link cp nav-text-color">Get Service</a>
 								</li>
 								<li  class="nav-item">
-								<a href="https://forum.toolgrazp.net" target="_blank" class="nav-link cp nav-text-color">Forum</a>
+								<a href="https://forum.toolgrazp.net" class="nav-link cp nav-text-color">Forum</a>
 								</li>
 
 								{userDetails.user && (userDetails.user.appUserType === "INDIVIDUAL" && !userDetails.user.adminToFFlStore) && <li class="nav-item">
