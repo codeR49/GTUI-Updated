@@ -57,6 +57,8 @@ const Header = () => {
 	let user = localStorage.getItem('currentUser');
 	const [modalFlag, setModalFlag] = useState(false);
 	const [dealerStatus, setDealerStatus] = useState('');
+	const [dealerStatus1, setDealerStatus1] = useState([]);
+	let status = [];
 	const [basicModalProps, setBasicModalProps] = useState({
 		title: "Alert",
 		body: "",
@@ -87,7 +89,7 @@ const Header = () => {
 			console.error("error occur on useOnClickOutside()");
 		}
 	});
-	
+
 	// user logout method
 	const userLogout = () => {
 		try {
@@ -98,7 +100,7 @@ const Header = () => {
 					dispatch({ type: "LOGOUT" });
 					history.push("/");
 					const cookies = new Cookies();
-					cookies.remove('token',{domain:'.toolgrazp.net'});
+					cookies.remove('token', { domain: '.toolgrazp.net' });
 					goToTopOfWindow();
 					spinner.hide();
 					Toast.success({
@@ -472,13 +474,33 @@ const Header = () => {
 		});
 	}
 
+	// get dealer all license status
+	const listAllStores = () => {
+		ApiService.getMyStores(userDetails.user.sid).then(
+			response => {
+				setDealerStatus1(response.data);
+			},
+			err => {
+				Toast.error({ message: err.response.data ? err.response.data.error : 'Data loading error', time: 2000 });
+			}
+		).finally(() => {
+			spinner.hide();
+		});
+	}
+
+	for (let i = 0; i < dealerStatus1.length; i++) {
+		status.push(dealerStatus1[i].approvalStatus);
+	}
+
+	let uniquestatus = [...new Set(status)];
 	// init component
 	useEffect(() => {
 		if (userDetails?.user?.sid && userDetails.user.appUserType === "DEALER") {
 			listMyStores();
+			listAllStores();
 		}
 
-	}, [listMyStores]);
+	}, []);
 
 	return (
 		<>
@@ -497,25 +519,29 @@ const Header = () => {
 								<li class="nav-item" onClick={() => initBuySell('/buyfilter')}>
 									<a class="nav-link cp nav-text-color">Buy</a>
 								</li>
-								{	
-									(userDetails.user && userDetails.user.appUserType === "DEALER" && dealerStatus === 'EXPIRED')
-									 ?
-									 <li class="nav-link cp nav-text-color" onClick={() => {setModalFlag(true); setBasicModalProps({...basicModalProps, body: "Your license is expired" }); }}>Sell</li>
-									 :
-									 (userDetails.user && userDetails.user.appUserType === "DEALER" && dealerStatus === 'UNDER_REVIEW') ?
-									 <li class="nav-link cp nav-text-color" onClick={() => {setModalFlag(true); setBasicModalProps({...basicModalProps, body: "Your license is under review" }); }}>Sell</li>
-									 :
-									<li class="nav-item" onClick={() => initBuySell('/create-listing')}>
-										<a class="nav-link cp nav-text-color">Sell</a>
-									</li> 
-									
+								{
+									((userDetails.user && userDetails.user.appUserType === "DEALER" && uniquestatus.length === 1 && uniquestatus[0] === 'EXPIRED')
+									?
+									<li class="nav-link cp nav-text-color" onClick={() => { setModalFlag(true); setBasicModalProps({ ...basicModalProps, body: `All your ${status.length} license is expired` }); }}>Sell</li>
+									:
+									(userDetails.user && userDetails.user.appUserType === "DEALER" && dealerStatus === 'EXPIRED'))
+										?
+										<li class="nav-link cp nav-text-color" onClick={() => { setModalFlag(true); setBasicModalProps({ ...basicModalProps, body: "Your license is expired" }); }}>Sell</li>
+										:
+										(userDetails.user && userDetails.user.appUserType === "DEALER" && dealerStatus === 'UNDER_REVIEW') ?
+											<li class="nav-link cp nav-text-color" onClick={() => { setModalFlag(true); setBasicModalProps({ ...basicModalProps, body: "Your license is under review" }); }}>Sell</li>
+											:
+											<li class="nav-item" onClick={() => initBuySell('/create-listing')}>
+												<a class="nav-link cp nav-text-color">Sell</a>
+											</li>
+
 								}
 
 								<li class="nav-item" onClick={() => initBuySell('/getservice')}>
 									<a class="nav-link cp nav-text-color">Get Service</a>
 								</li>
-								<li  class="nav-item">
-								<a href="https://forum.toolgrazp.net" class="nav-link cp nav-text-color">Forum</a>
+								<li class="nav-item">
+									<a href="https://forum.toolgrazp.net" class="nav-link cp nav-text-color">Forum</a>
 								</li>
 
 								{userDetails.user && (userDetails.user.appUserType === "INDIVIDUAL" && !userDetails.user.adminToFFlStore) && <li class="nav-item">

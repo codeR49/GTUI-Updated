@@ -178,8 +178,8 @@ const MyStores = props => {
                                     {(storeValue != "false" && storeValue != '') &&
                                         !_.isEmpty(cardList) && cardList.map((list, index) => {
                                             return <div class="col p-0 store-menu" key={index}>
-                                                <Link to={(isExpired && list.type == "setting") ? '#' : `/mystore/${list.type}/${selectedStore}`}>
-                                                    <Card className={classNames("card-deck border m-1", { "disabled": isExpired && list.type == "setting" })}>
+                                                <Link to={(isExpired && list.type == "setting" || isExpired && list.type == "listing")? '#' : `/mystore/${list.type}/${selectedStore}`}>
+                                                    <Card className={classNames("card-deck border m-1", { "disabled": isExpired && list.type == "setting" }, { "disabled": isExpired && list.type == "listing" })}>
                                                         <Card.Body className="text-center">
                                                             <Card.Title>
                                                                 <div class={list.icon}>
