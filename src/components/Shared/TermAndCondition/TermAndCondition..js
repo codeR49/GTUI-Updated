@@ -144,7 +144,8 @@ const TermAndCondition = ({
                                     // This .ORG siteKey:- 6Lcf_S0gAAAAAER-z-HRC2qskTzoh5YhhKiY9vm-
                                     // sitekey="6Lcf_S0gAAAAAER-z-HRC2qskTzoh5YhhKiY9vm-"
                                     // This .NET siteKey:- 6LcvRsQaAAAAAOombSCiE2uU2WP884J6YZvblYr2
-                                    sitekey="6LcvRsQaAAAAAOombSCiE2uU2WP884J6YZvblYr2"
+                                    //6LcvRsQaAAAAAOombSCiE2uU2WP884J6YZvblYr2
+                                    sitekey="6Lf0Oz8gAAAAAI34ysPHK3zKn4Q4GeQne5SX5ePc"
                                     onChange={(value) => { 
                                         setValidCaptcha(true);
                                     }}
